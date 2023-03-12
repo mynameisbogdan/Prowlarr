@@ -37,6 +37,7 @@ namespace NzbDrone.Core.Indexers
         public abstract bool SupportsSearch { get; }
         public abstract bool SupportsRedirect { get; }
         public abstract bool SupportsPagination { get; }
+        public abstract IndexerFilterReleases FilterReleases { get; }
         public abstract IndexerCapabilities Capabilities { get; protected set; }
 
         public IndexerBase(IIndexerStatusService indexerStatusService, IConfigService configService, Logger logger)
@@ -140,7 +141,14 @@ namespace NzbDrone.Core.Indexers
                 }
             });
 
-            return result.DistinctBy(v => v.Guid).ToList();
+            result = result.DistinctBy(v => v.Guid).ToList();
+
+            if (FilterReleases != IndexerFilterReleases.None)
+            {
+                result = FilterReleasesByQuery(result, searchCriteria).ToList();
+            }
+
+            return result;
         }
 
         protected IEnumerable<ReleaseInfo> FilterReleasesByQuery(IEnumerable<ReleaseInfo> releases, SearchCriteriaBase searchCriteria)
@@ -154,8 +162,20 @@ namespace NzbDrone.Core.Indexers
                 // split search term to individual terms for less aggressive filtering, filter common terms
                 var terms = splitRegex.Split(searchCriteria.SearchTerm).Where(t => t.IsNotNullOrWhiteSpace() && t.Length > 1 && !commonWords.ContainsIgnoreCase(t));
 
+                bool Predicate(string t, ReleaseInfo r) => (r.Title.IsNotNullOrWhiteSpace() && r.Title.ContainsIgnoreCase(t)) || (r.Description.IsNotNullOrWhiteSpace() && r.Description.ContainsIgnoreCase(t));
+
                 // check in title and description for any term searched for
-                releases = releases.Where(r => terms.Any(t => (r.Title.IsNotNullOrWhiteSpace() && r.Title.ContainsIgnoreCase(t)) || (r.Description.IsNotNullOrWhiteSpace() && r.Description.ContainsIgnoreCase(t)))).ToList();
+                switch (FilterReleases)
+                {
+                    case IndexerFilterReleases.Any:
+                        releases = releases.Where(r => terms.Any(t => Predicate(t, r))).ToList();
+                        break;
+                    case IndexerFilterReleases.All:
+                        releases = releases.Where(r => terms.All(t => Predicate(t, r))).ToList();
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
             }
 
             return releases;

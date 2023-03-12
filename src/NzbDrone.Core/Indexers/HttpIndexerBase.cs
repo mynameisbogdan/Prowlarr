@@ -35,6 +35,8 @@ namespace NzbDrone.Core.Indexers
         public override bool SupportsRedirect => false;
         public override bool SupportsPagination => false;
 
+        public override IndexerFilterReleases FilterReleases => IndexerFilterReleases.None;
+
         public override Encoding Encoding => Encoding.UTF8;
         public override string Language => "en-US";
         public override string[] LegacyUrls => Array.Empty<string>();

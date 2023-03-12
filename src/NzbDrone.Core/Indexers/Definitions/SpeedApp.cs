@@ -1,10 +1,7 @@
 using System.Collections.Generic;
-using System.Linq;
 using NLog;
 using NzbDrone.Core.Configuration;
-using NzbDrone.Core.IndexerSearch.Definitions;
 using NzbDrone.Core.Messaging.Events;
-using NzbDrone.Core.Parser.Model;
 
 namespace NzbDrone.Core.Indexers.Definitions
 {
@@ -17,16 +14,11 @@ namespace NzbDrone.Core.Indexers.Definitions
         public override string Language => "ro-RO";
         public override IndexerPrivacy Privacy => IndexerPrivacy.Private;
 
+        public override IndexerFilterReleases FilterReleases => IndexerFilterReleases.All;
+
         public SpeedApp(IIndexerHttpClient httpClient, IEventAggregator eventAggregator, IIndexerStatusService indexerStatusService, IConfigService configService, Logger logger, IIndexerRepository indexerRepository)
             : base(httpClient, eventAggregator, indexerStatusService, configService, logger, indexerRepository)
         {
-        }
-
-        protected override IList<ReleaseInfo> CleanupReleases(IEnumerable<ReleaseInfo> releases, SearchCriteriaBase searchCriteria)
-        {
-            var cleanReleases = base.CleanupReleases(releases, searchCriteria);
-
-            return FilterReleasesByQuery(cleanReleases, searchCriteria).ToList();
         }
 
         protected override IndexerCapabilities SetCapabilities()

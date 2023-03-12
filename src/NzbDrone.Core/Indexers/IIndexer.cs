@@ -12,6 +12,7 @@ namespace NzbDrone.Core.Indexers
         bool SupportsSearch { get; }
         bool SupportsRedirect { get; }
         bool SupportsPagination { get; }
+        IndexerFilterReleases FilterReleases { get; }
         IndexerCapabilities Capabilities { get; }
 
         string[] IndexerUrls { get; }
