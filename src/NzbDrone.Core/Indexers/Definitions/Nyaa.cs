@@ -1,16 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Globalization;
-using System.Net;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using AngleSharp.Html.Parser;
+using System.Xml.Linq;
 using NLog;
-using NzbDrone.Common;
+using NzbDrone.Common.Extensions;
 using NzbDrone.Common.Http;
 using NzbDrone.Core.Configuration;
-using NzbDrone.Core.Indexers.Exceptions;
 using NzbDrone.Core.Indexers.Settings;
 using NzbDrone.Core.IndexerSearch.Definitions;
 using NzbDrone.Core.Messaging.Events;
@@ -50,7 +48,15 @@ public class Nyaa : TorrentIndexerBase<NoAuthTorrentBaseSettings>
 
     public override IParseIndexerResponse GetParser()
     {
-        return new NyaaPleaseParser(Settings, Capabilities.Categories);
+        return new NyaaParser(Settings, Capabilities.Categories)
+        {
+            UseGuidInfoUrl = true,
+            SizeElementName = "size",
+            InfoHashElementName = "infoHash",
+            PeersElementName = "leechers",
+            CalculatePeersAsSum = true,
+            SeedsElementName = "seeders"
+        };
     }
 
     private IndexerCapabilities SetCapabilities()
@@ -131,22 +137,35 @@ public class NyaaRequestGenerator : IIndexerRequestGenerator
 
     public IndexerPageableRequestChain GetSearchRequests(MovieSearchCriteria searchCriteria)
     {
-        throw new NotImplementedException();
+        var pageableRequests = new IndexerPageableRequestChain();
+
+        pageableRequests.Add(GetPagedRequests(searchCriteria.SanitizedSearchTerm, searchCriteria));
+
+        return pageableRequests;
     }
 
     public IndexerPageableRequestChain GetSearchRequests(MusicSearchCriteria searchCriteria)
     {
-        return new IndexerPageableRequestChain();
+        var pageableRequests = new IndexerPageableRequestChain();
+
+        pageableRequests.Add(GetPagedRequests(searchCriteria.SanitizedSearchTerm, searchCriteria));
+
+        return pageableRequests;
     }
 
     public IndexerPageableRequestChain GetSearchRequests(TvSearchCriteria searchCriteria)
     {
-        throw new NotImplementedException();
+        var pageableRequests = new IndexerPageableRequestChain();
+
+        pageableRequests.Add(GetPagedRequests(searchCriteria.SanitizedTvSearchString, searchCriteria));
+        pageableRequests.Add(GetPagedRequests(searchCriteria.SanitizedSearchTerm, searchCriteria));
+
+        return pageableRequests;
     }
 
     public IndexerPageableRequestChain GetSearchRequests(BookSearchCriteria searchCriteria)
     {
-        throw new NotImplementedException();
+        return new IndexerPageableRequestChain();
     }
 
     public IndexerPageableRequestChain GetSearchRequests(BasicSearchCriteria searchCriteria)
@@ -162,110 +181,61 @@ public class NyaaRequestGenerator : IIndexerRequestGenerator
     {
         var parameters = new NameValueCollection
         {
-            { "q", $"{term}" },
-            { "s", "id" },
-            { "o", "desc" }
+            { "cats", "1_0" }
         };
 
-        var searchUrl = $"{_settings.BaseUrl.TrimEnd('/')}/?{parameters.GetQueryString()}";
+        if (term.IsNotNullOrWhiteSpace())
+        {
+            parameters.Set("term", term.Trim());
+        }
 
-        yield return new IndexerRequest(searchUrl, HttpAccept.Html);
+        var searchUrl = $"{_settings.BaseUrl.TrimEnd('/')}/rss?{parameters.GetQueryString()}";
+
+        yield return new IndexerRequest(searchUrl, HttpAccept.Rss);
     }
 
     public Func<IDictionary<string, string>> GetCookies { get; set; }
     public Action<IDictionary<string, string>, DateTime?> CookiesUpdater { get; set; }
 }
 
-public class NyaaPleaseParser : IParseIndexerResponse
+public class NyaaParser : TorrentRssParser
 {
     private readonly NoAuthTorrentBaseSettings _settings;
     private readonly IndexerCapabilitiesCategories _categories;
 
-    public NyaaPleaseParser(NoAuthTorrentBaseSettings settings, IndexerCapabilitiesCategories categories)
+    public NyaaParser(NoAuthTorrentBaseSettings settings, IndexerCapabilitiesCategories categories)
     {
         _settings = settings;
         _categories = categories;
     }
 
-    public IList<ReleaseInfo> ParseResponse(IndexerResponse indexerResponse)
+    protected override ReleaseInfo ProcessItem(XElement item, ReleaseInfo releaseInfo)
     {
-        if (indexerResponse.HttpResponse.StatusCode != HttpStatusCode.OK)
+        var result = base.ProcessItem(item, releaseInfo) as TorrentInfo;
+
+        result.Grabs = GetGrabs(item);
+
+        return result;
+    }
+
+    protected override string GetTitle(XElement item)
+    {
+        return ParseTitle(base.GetTitle(item));
+    }
+
+    protected override ICollection<IndexerCategory> GetCategory(XElement item)
+    {
+        return _categories.MapTrackerCatToNewznab(item.FindDecendants("categoryId").SingleOrDefault()?.Value ?? string.Empty);
+    }
+
+    protected virtual int? GetGrabs(XElement item)
+    {
+        if (int.TryParse(item.FindDecendants("downloads").SingleOrDefault()?.Value, out var grabs))
         {
-            throw new IndexerException(indexerResponse, "Unexpected response status {0} code from indexer request", indexerResponse.HttpResponse.StatusCode);
+            return grabs;
         }
 
-        var releaseInfos = new List<ReleaseInfo>();
-
-        var parser = new HtmlParser();
-        var dom = parser.ParseDocument(indexerResponse.Content);
-
-        var rows = dom.QuerySelectorAll("tr.default,tr.danger,tr.success");
-        foreach (var row in rows)
-        {
-            var infoUrl = _settings.BaseUrl + row.QuerySelector("td:nth-child(2) a:last-of-type")?.GetAttribute("href");
-            var downloadUrl = _settings.BaseUrl + row.QuerySelector("td:nth-child(3) a[href$=\".torrent\"]")?.GetAttribute("href");
-            var magnetUrl = row.QuerySelector("a[href^=\"magnet:?\"]")?.GetAttribute("href");
-
-            var title = row.QuerySelector("td:nth-child(2) a:last-of-type").TextContent.Trim();
-            var description = title;
-
-            if (title.Contains("[PuyaSubs!]"))
-            {
-                title += " Spanish";
-            }
-
-            var categoryLink = row.QuerySelector("td:nth-child(1) a[href]").GetAttribute("href");
-            var categoryId = ParseUtil.GetArgumentFromQueryString(categoryLink, "c");
-            var categories = _categories.MapTrackerCatToNewznab(categoryId);
-
-            var seeders = ParseUtil.CoerceInt(row.QuerySelector("td:nth-child(6):not(:empty)")?.TextContent.Trim());
-            var peers = seeders + ParseUtil.CoerceInt(row.QuerySelector("td:nth-child(7):not(:empty)")?.TextContent.Trim());
-            var size = ParseUtil.GetBytes(row.QuerySelector("td:nth-child(4)")?.TextContent.Trim());
-            var grabs = ParseUtil.CoerceInt(row.QuerySelector("td:nth-child(8):not(:empty)")?.TextContent.Trim());
-
-            var date = row.QuerySelector("td:nth-child(5)").TextContent.Trim();
-            var publishDate = DateTime.ParseExact(date, "yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
-
-            releaseInfos.Add(new TorrentInfo
-            {
-                Guid = infoUrl + "?nh=" + HashUtil.CalculateMd5(title),
-                InfoUrl = infoUrl,
-                DownloadUrl = downloadUrl,
-                MagnetUrl = magnetUrl,
-                Title = title,
-                Description = description,
-                Categories = categories,
-                Seeders = seeders,
-                Peers = peers,
-                Size = size,
-                Grabs = grabs,
-                PublishDate = publishDate,
-                DownloadVolumeFactor = 0,
-                UploadVolumeFactor = 1
-            });
-
-            title = ParseTitle(title);
-
-            releaseInfos.Add(new TorrentInfo
-            {
-                Guid = infoUrl + "?nh=" + HashUtil.CalculateMd5(title),
-                InfoUrl = infoUrl,
-                DownloadUrl = downloadUrl,
-                MagnetUrl = magnetUrl,
-                Title = title,
-                Description = description,
-                Categories = categories,
-                Seeders = seeders,
-                Peers = peers,
-                Size = size,
-                Grabs = grabs,
-                PublishDate = publishDate,
-                DownloadVolumeFactor = 0,
-                UploadVolumeFactor = 1
-            });
-        }
-
-        return releaseInfos.ToArray();
+        return null;
     }
 
     private static string ParseTitle(string title)
@@ -282,6 +252,4 @@ public class NyaaPleaseParser : IParseIndexerResponse
 
         return title.Trim();
     }
-
-    public Action<IDictionary<string, string>, DateTime?> CookiesUpdater { get; set; }
 }
