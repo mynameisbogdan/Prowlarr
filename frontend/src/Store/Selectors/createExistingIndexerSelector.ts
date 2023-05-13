@@ -1,4 +1,4 @@
-import { some } from 'lodash';
+import { some } from 'lodash-es';
 import { createSelector } from 'reselect';
 import AppState from 'App/State/AppState';
 import createAllIndexersSelector from './createAllIndexersSelector';

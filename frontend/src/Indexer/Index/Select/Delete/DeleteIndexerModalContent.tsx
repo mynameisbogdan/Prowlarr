@@ -1,4 +1,4 @@
-import { orderBy } from 'lodash';
+import { sortBy } from 'lodash-es';
 import React, { useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Button from 'Components/Link/Button';
@@ -29,7 +29,7 @@ function DeleteIndexerModalContent(props: DeleteIndexerModalContentProps) {
       return allIndexers.find((s) => s.id === id);
     }) as Indexer[];
 
-    return orderBy(indexerList, ['sortName']);
+    return sortBy(indexerList, ['sortName']);
   }, [indexerIds, allIndexers]);
 
   const onDeleteIndexerConfirmed = useCallback(() => {

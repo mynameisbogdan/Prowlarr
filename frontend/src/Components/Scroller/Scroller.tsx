@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import { throttle } from 'lodash';
+import { throttle } from 'lodash-es';
 import React, {
   ForwardedRef,
   forwardRef,
