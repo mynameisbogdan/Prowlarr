@@ -1,4 +1,4 @@
-import { find } from 'lodash';
+import { find } from 'lodash-es';
 import { createSelector } from 'reselect';
 import AppState from 'App/State/AppState';
 import { IndexerStatus } from 'Indexer/Indexer';

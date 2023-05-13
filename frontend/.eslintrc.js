@@ -49,7 +49,8 @@ module.exports = {
     'simple-import-sort',
     'import',
     '@typescript-eslint',
-    'prettier'
+    'prettier',
+    'lodash'
   ],
 
   settings: {
@@ -319,7 +320,19 @@ module.exports = {
     'react/sort-comp': 2,
     'react/jsx-wrap-multilines': 2,
     'react-hooks/rules-of-hooks': 'error',
-    'react-hooks/exhaustive-deps': 'error'
+    'react-hooks/exhaustive-deps': 'error',
+
+    'no-restricted-imports': ['error', {
+      paths: [
+        {
+          name: 'lodash',
+          message: 'Please use `lodash-es` instead'
+        }
+      ]
+    }],
+    'lodash/collection-ordering': 'error',
+    'lodash/collection-return': 'error',
+    'lodash/import-scope': ['error', 'member']
   },
   overrides: [
     {

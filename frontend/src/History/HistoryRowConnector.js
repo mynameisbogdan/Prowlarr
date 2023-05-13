@@ -1,5 +1,5 @@
 import { push } from 'connected-react-router';
-import _ from 'lodash';
+import { pickBy } from 'lodash-es';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
@@ -50,7 +50,7 @@ class HistoryRowConnector extends Component {
   // Listeners
 
   onSearchPress = (query, indexerId, categories, type, limit, offset) => {
-    this.props.setSearchDefault(_.pickBy({
+    this.props.setSearchDefault(pickBy({
       searchQuery: query,
       searchIndexerIds: [indexerId],
       searchCategories: categories,

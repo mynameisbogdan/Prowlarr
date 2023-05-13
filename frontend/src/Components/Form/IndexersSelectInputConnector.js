@@ -1,4 +1,4 @@
-import { groupBy, map } from 'lodash';
+import { groupBy, map } from 'lodash-es';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import { connect } from 'react-redux';

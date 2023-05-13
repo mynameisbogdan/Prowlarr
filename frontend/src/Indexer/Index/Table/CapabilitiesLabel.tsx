@@ -1,4 +1,4 @@
-import { uniqBy } from 'lodash';
+import { uniqBy } from 'lodash-es';
 import React from 'react';
 import Label from 'Components/Label';
 import { IndexerCapabilities } from 'Indexer/Indexer';

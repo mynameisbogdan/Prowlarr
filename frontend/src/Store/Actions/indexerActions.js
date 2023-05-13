@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { cloneDeep, find, isFunction } from 'lodash-es';
 import { createAction } from 'redux-actions';
 import { filterTypePredicates, sortDirections } from 'Helpers/Props';
 import createFetchHandler from 'Store/Actions/Creators/createFetchHandler';
@@ -198,7 +198,7 @@ export const setIndexerFieldValue = createAction(SET_INDEXER_FIELD_VALUE, (paylo
 function applySchemaDefaults(selectedSchema, schemaDefaults) {
   if (!schemaDefaults) {
     return selectedSchema;
-  } else if (_.isFunction(schemaDefaults)) {
+  } else if (isFunction(schemaDefaults)) {
     return schemaDefaults(selectedSchema);
   }
 
@@ -213,9 +213,9 @@ function selectSchema(state, payload, schemaDefaults) {
     name
   } = payload;
 
-  const selectedImplementation = _.find(newState.schema.items, { implementation, name });
+  const selectedImplementation = find(newState.schema.items, { implementation, name });
 
-  newState.selectedSchema = applySchemaDefaults(_.cloneDeep(selectedImplementation), schemaDefaults);
+  newState.selectedSchema = applySchemaDefaults(cloneDeep(selectedImplementation), schemaDefaults);
 
   return updateSectionState(state, section, newState);
 }

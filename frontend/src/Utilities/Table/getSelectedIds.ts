@@ -1,4 +1,4 @@
-import { reduce } from 'lodash';
+import { reduce } from 'lodash-es';
 import { SelectedState } from 'Helpers/Hooks/useSelectState';
 
 function getSelectedIds(selectedState: SelectedState): number[] {
