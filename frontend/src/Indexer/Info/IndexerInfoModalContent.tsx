@@ -1,4 +1,4 @@
-import { uniqBy } from 'lodash';
+import { uniqBy } from 'lodash-es';
 import React, { useCallback, useState } from 'react';
 import { Tab, TabList, TabPanel, Tabs } from 'react-tabs';
 import Alert from 'Components/Alert';

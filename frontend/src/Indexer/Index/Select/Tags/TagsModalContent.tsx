@@ -1,4 +1,4 @@
-import { uniq } from 'lodash';
+import { uniq } from 'lodash-es';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Tag } from 'App/State/TagsAppState';

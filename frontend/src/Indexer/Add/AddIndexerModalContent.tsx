@@ -1,4 +1,4 @@
-import { some } from 'lodash';
+import { some } from 'lodash-es';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { createSelector } from 'reselect';
