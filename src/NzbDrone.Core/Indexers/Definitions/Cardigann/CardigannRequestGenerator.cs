@@ -192,6 +192,44 @@ namespace NzbDrone.Core.Indexers.Definitions.Cardigann
             return variables;
         }
 
+        public async Task TestLogin()
+        {
+            if (_definition is not { Login.Test.Path: not null })
+            {
+                return;
+            }
+
+            var login = _definition.Login;
+
+            var variables = GetBaseTemplateVariables();
+            var headers = ParseCustomHeaders(_definition.Login?.Headers ?? _definition.Search?.Headers, variables);
+
+            var loginTestUrl = ResolvePath(login.Test.Path).ToString();
+
+            var requestBuilder = new HttpRequestBuilder(loginTestUrl)
+            {
+                LogResponseContent = false,
+                Method = HttpMethod.Get,
+                AllowAutoRedirect = true,
+                SuppressHttpError = true,
+                Encoding = _encoding
+            };
+
+            var request = requestBuilder
+                .SetCookies(Cookies ?? new Dictionary<string, string>())
+                .SetHeaders(headers ?? new Dictionary<string, string>())
+                .SetEncoding(_encoding)
+                .WithRateLimit(_rateLimit.TotalSeconds)
+                .Build();
+
+            var response = await HttpClient.ExecuteProxiedAsync(request, Definition);
+
+            if (CheckIfLoginIsNeeded(response))
+            {
+                throw new CardigannException("Login failed");
+            }
+        }
+
         public async Task DoLogin()
         {
             var login = _definition.Login;
@@ -215,7 +253,7 @@ namespace NzbDrone.Core.Indexers.Definitions.Cardigann
 
                 var requestBuilder = new HttpRequestBuilder(loginUrl)
                 {
-                    LogResponseContent = true,
+                    LogResponseContent = false,
                     Method = HttpMethod.Post,
                     AllowAutoRedirect = true,
                     SuppressHttpError = true,
@@ -371,7 +409,7 @@ namespace NzbDrone.Core.Indexers.Definitions.Cardigann
 
                     var requestBuilder = new HttpRequestBuilder(captchaUrl.ToString())
                     {
-                        LogResponseContent = true,
+                        LogResponseContent = false,
                         Method = HttpMethod.Get,
                         Encoding = _encoding
                     };
@@ -440,7 +478,7 @@ namespace NzbDrone.Core.Indexers.Definitions.Cardigann
 
                     var requestBuilder = new HttpRequestBuilder(submitUrl.ToString())
                     {
-                        LogResponseContent = true,
+                        LogResponseContent = false,
                         Method = HttpMethod.Post,
                         AllowAutoRedirect = true,
                         Encoding = _encoding
@@ -466,7 +504,7 @@ namespace NzbDrone.Core.Indexers.Definitions.Cardigann
                 {
                     var requestBuilder = new HttpRequestBuilder(submitUrl.ToString())
                     {
-                        LogResponseContent = true,
+                        LogResponseContent = false,
                         Method = HttpMethod.Post,
                         AllowAutoRedirect = true,
                         SuppressHttpError = true,
@@ -513,7 +551,7 @@ namespace NzbDrone.Core.Indexers.Definitions.Cardigann
 
                 var requestBuilder = new HttpRequestBuilder(loginUrl)
                 {
-                    LogResponseContent = true,
+                    LogResponseContent = false,
                     Method = HttpMethod.Get,
                     SuppressHttpError = true,
                     Encoding = _encoding
@@ -542,7 +580,7 @@ namespace NzbDrone.Core.Indexers.Definitions.Cardigann
 
                 var requestBuilder = new HttpRequestBuilder(loginUrl)
                 {
-                    LogResponseContent = true,
+                    LogResponseContent = false,
                     Method = HttpMethod.Get,
                     SuppressHttpError = true,
                     Encoding = _encoding
@@ -616,7 +654,7 @@ namespace NzbDrone.Core.Indexers.Definitions.Cardigann
 
             var requestBuilder = new HttpRequestBuilder(loginUrl.AbsoluteUri)
             {
-                LogResponseContent = true,
+                LogResponseContent = false,
                 Method = HttpMethod.Get,
                 Encoding = _encoding
             };

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using FluentValidation.Results;
 using NLog;
 using NzbDrone.Common.Cache;
+using NzbDrone.Common.Extensions;
 using NzbDrone.Common.Http;
 using NzbDrone.Core.Configuration;
 using NzbDrone.Core.IndexerSearch.Definitions;
@@ -207,9 +208,27 @@ namespace NzbDrone.Core.Indexers.Definitions.Cardigann
         protected override async Task Test(List<ValidationFailure> failures)
         {
             await base.Test(failures);
+
             if (failures.HasErrors())
             {
                 return;
+            }
+
+            var generator = (CardigannRequestGenerator)GetRequestGenerator();
+
+            SetCookieFunctions(generator);
+
+            generator.Settings = Settings;
+
+            try
+            {
+                await generator.TestLogin();
+            }
+            catch (Exception ex)
+            {
+                _logger.Warn(ex, "Test login failed: " + ex.Message);
+
+                failures.AddIfNotNull(new ValidationFailure(string.Empty, ex.Message));
             }
         }
 
