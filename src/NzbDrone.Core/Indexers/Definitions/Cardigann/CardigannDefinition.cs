@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Net;
 
 namespace NzbDrone.Core.Indexers.Definitions.Cardigann
 {
@@ -187,6 +188,7 @@ namespace NzbDrone.Core.Indexers.Definitions.Cardigann
         public BeforeBlock Before { get; set; }
         public InfohashBlock Infohash { get; set; }
         public Dictionary<string, List<string>> Headers { get; set; }
+        public IEnumerable<HttpStatusCode> SuppressHttpErrorStatusCodes { get; set; }
     }
 
     public class InfohashBlock

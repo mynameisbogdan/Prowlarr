@@ -801,6 +801,7 @@ namespace NzbDrone.Core.Indexers.Definitions.Cardigann
         {
             Cookies = GetCookies();
             var method = HttpMethod.Get;
+            IList<HttpStatusCode> suppressHttpErrorStatusCodes = null;
 
             var variables = GetBaseTemplateVariables();
             AddTemplateVariablesFromUri(variables, link, ".DownloadUri");
@@ -809,6 +810,7 @@ namespace NzbDrone.Core.Indexers.Definitions.Cardigann
             if (_definition.Download != null)
             {
                 var download = _definition.Download;
+                suppressHttpErrorStatusCodes = download.SuppressHttpErrorStatusCodes.ToList();
 
                 HttpResponse response = null;
 
@@ -952,6 +954,11 @@ namespace NzbDrone.Core.Indexers.Definitions.Cardigann
                 .Build();
 
             downloadRequest.Method = method;
+
+            if (suppressHttpErrorStatusCodes.Count > 0)
+            {
+                downloadRequest.SuppressHttpErrorStatusCodes = suppressHttpErrorStatusCodes;
+            }
 
             return downloadRequest;
         }
