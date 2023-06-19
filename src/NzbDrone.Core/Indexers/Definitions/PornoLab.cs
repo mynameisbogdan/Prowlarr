@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -11,6 +10,7 @@ using NzbDrone.Common.Extensions;
 using NzbDrone.Common.Http;
 using NzbDrone.Core.Annotations;
 using NzbDrone.Core.Configuration;
+using NzbDrone.Core.Indexers.Definitions.Cardigann;
 using NzbDrone.Core.Indexers.Exceptions;
 using NzbDrone.Core.Indexers.Settings;
 using NzbDrone.Core.IndexerSearch.Definitions;
@@ -46,16 +46,72 @@ namespace NzbDrone.Core.Indexers.Definitions
             return new PornoLabParser(Settings, Capabilities.Categories, _logger);
         }
 
+        public override object RequestAction(string action, IDictionary<string, string> query)
+        {
+            if (action == "checkCaptcha")
+            {
+                var requestBuilder = new HttpRequestBuilder(LoginUrl)
+                {
+                    AllowAutoRedirect = true
+                };
+
+                var landingRequest = requestBuilder.Build();
+
+                var landingResponse = ExecuteAuth(landingRequest).GetAwaiter().GetResult();
+
+                var htmlParser = new HtmlParser();
+                var landingDocument = htmlParser.ParseDocument(landingResponse.Content);
+
+                var captchaElement = landingDocument.QuerySelector("form[action=\"login.php\"] img[src*=\"/captcha/\"]");
+
+                if (captchaElement != null)
+                {
+                    var captchaUrl = new Uri(new Uri(LoginUrl), captchaElement.GetAttribute("src"));
+
+                    _logger.Warn(captchaUrl.AbsoluteUri);
+
+                    var captchaRequest = new HttpRequestBuilder(captchaUrl.ToString())
+                        .SetCookies(Cookies ?? new Dictionary<string, string>())
+                        .SetHeader("Referer", LoginUrl)
+                        .WithRateLimit(RateLimit.TotalSeconds)
+                        .Build();
+
+                    var captchaResponse = ExecuteAuth(captchaRequest).GetAwaiter().GetResult();
+
+                    if (captchaResponse.GetCookies().Any())
+                    {
+                        Cookies = captchaResponse.GetCookies();
+                    }
+
+                    return new
+                    {
+                        captchaRequest = new Captcha
+                        {
+                            ContentType = captchaResponse.Headers.ContentType,
+                            ImageData = captchaResponse.ResponseData
+                        }
+                    };
+                }
+
+                return new
+                {
+                    captchaRequest = string.Empty
+                };
+            }
+
+            return base.RequestAction(action, query);
+        }
+
         protected override async Task DoLogin()
         {
             var requestBuilder = new HttpRequestBuilder(LoginUrl)
             {
                 LogResponseContent = true,
-                AllowAutoRedirect = true,
-                Method = HttpMethod.Post
+                AllowAutoRedirect = true
             };
 
             var authLoginRequest = requestBuilder
+                .Post()
                 .AddFormParameter("login_username", Settings.Username)
                 .AddFormParameter("login_password", Settings.Password)
                 .AddFormParameter("login", "Login")
@@ -66,11 +122,11 @@ namespace NzbDrone.Core.Indexers.Definitions
 
             if (CheckIfLoginNeeded(response))
             {
-                var loginResultParser = new HtmlParser();
-                var loginResultDocument = loginResultParser.ParseDocument(response.Content);
-                var errorMessage = loginResultDocument.QuerySelector("h4[class=\"warnColor1 tCenter mrg_16\"]")?.TextContent;
+                var parser = new HtmlParser();
+                var document = await parser.ParseDocumentAsync(response.Content);
+                var errorMessage = document.QuerySelector("h4.warnColor1.tCenter.mrg_16, div.msg-main")?.TextContent.Trim();
 
-                throw new IndexerAuthException(errorMessage ?? "Unknown error message, please report");
+                throw new IndexerAuthException(errorMessage ?? "Unknown error message");
             }
 
             UpdateCookies(response.GetCookies(), DateTime.Now.AddDays(30));
@@ -411,5 +467,8 @@ namespace NzbDrone.Core.Indexers.Definitions
 
         [FieldDefinition(4, Label = "Strip Russian Letters", HelpText = "Strip Cyrillic letters from release names", Type = FieldType.Checkbox)]
         public bool StripRussianLetters { get; set; }
+
+        [FieldDefinition(5, Label = "CAPTCHA", Type = FieldType.CardigannCaptcha)]
+        public string CardigannCaptcha { get; set; }
     }
 }
