@@ -1,11 +1,9 @@
 import React, { useCallback, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useSelect } from 'App/SelectContext';
 import Label from 'Components/Label';
 import IconButton from 'Components/Link/IconButton';
 import RelativeDateCellConnector from 'Components/Table/Cells/RelativeDateCellConnector';
 import VirtualTableRowCell from 'Components/Table/Cells/VirtualTableRowCell';
-import VirtualTableSelectCell from 'Components/Table/Cells/VirtualTableSelectCell';
 import Column from 'Components/Table/Column';
 import TagListConnector from 'Components/TagListConnector';
 import { icons } from 'Helpers/Props';
@@ -24,11 +22,10 @@ interface IndexerIndexRowProps {
   indexerId: number;
   sortKey: string;
   columns: Column[];
-  isSelectMode: boolean;
 }
 
 function IndexerIndexRow(props: IndexerIndexRowProps) {
-  const { indexerId, columns, isSelectMode } = props;
+  const { indexerId, columns } = props;
 
   const { indexer, appProfile, status, longDateFormat, timeFormat } =
     useSelector(createIndexerIndexItemSelector(props.indexerId));
@@ -64,7 +61,6 @@ function IndexerIndexRow(props: IndexerIndexRowProps) {
   const [isEditIndexerModalOpen, setIsEditIndexerModalOpen] = useState(false);
   const [isDeleteIndexerModalOpen, setIsDeleteIndexerModalOpen] =
     useState(false);
-  const [selectState, selectDispatch] = useSelect();
 
   const onEditIndexerPress = useCallback(() => {
     setIsEditIndexerModalOpen(true);
@@ -87,29 +83,8 @@ function IndexerIndexRow(props: IndexerIndexRowProps) {
     // Mock handler to satisfy `onChange` being required for `CheckInput`.
   }, []);
 
-  const onSelectedChange = useCallback(
-    ({ id, value, shiftKey }) => {
-      selectDispatch({
-        type: 'toggleSelected',
-        id,
-        isSelected: value,
-        shiftKey,
-      });
-    },
-    [selectDispatch]
-  );
-
   return (
     <>
-      {isSelectMode ? (
-        <VirtualTableSelectCell
-          id={indexerId}
-          isSelected={selectState.selectedState[indexerId]}
-          isDisabled={false}
-          onSelectedChange={onSelectedChange}
-        />
-      ) : null}
-
       {columns.map((column) => {
         const { name, isVisible } = column;
 

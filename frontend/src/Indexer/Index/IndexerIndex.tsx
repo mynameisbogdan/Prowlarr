@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { SelectProvider } from 'App/SelectContext';
 import { APP_INDEXER_SYNC } from 'Commands/commandNames';
 import LoadingIndicator from 'Components/Loading/LoadingIndicator';
 import PageContent from 'Components/Page/PageContent';
@@ -30,13 +29,9 @@ import createDimensionsSelector from 'Store/Selectors/createDimensionsSelector';
 import createIndexerClientSideCollectionItemsSelector from 'Store/Selectors/createIndexerClientSideCollectionItemsSelector';
 import translate from 'Utilities/String/translate';
 import IndexerIndexFooter from './IndexerIndexFooter';
+import ManageIndexersModal from './Manage/ManageIndexersModal';
 import IndexerIndexFilterMenu from './Menus/IndexerIndexFilterMenu';
 import IndexerIndexSortMenu from './Menus/IndexerIndexSortMenu';
-import IndexerIndexSelectAllButton from './Select/IndexerIndexSelectAllButton';
-import IndexerIndexSelectAllMenuItem from './Select/IndexerIndexSelectAllMenuItem';
-import IndexerIndexSelectFooter from './Select/IndexerIndexSelectFooter';
-import IndexerIndexSelectModeButton from './Select/IndexerIndexSelectModeButton';
-import IndexerIndexSelectModeMenuItem from './Select/IndexerIndexSelectModeMenuItem';
 import IndexerIndexTable from './Table/IndexerIndexTable';
 import IndexerIndexTableOptions from './Table/IndexerIndexTableOptions';
 import styles from './IndexerIndex.css';
@@ -76,8 +71,9 @@ const IndexerIndex = withScrollPosition((props: IndexerIndexProps) => {
   const scrollerRef = useRef<HTMLDivElement>();
   const [isAddIndexerModalOpen, setIsAddIndexerModalOpen] = useState(false);
   const [isEditIndexerModalOpen, setIsEditIndexerModalOpen] = useState(false);
+  const [isManageIndexersModalOpen, setIsManageIndexersModalOpen] =
+    useState(false);
   const [jumpToCharacter, setJumpToCharacter] = useState<string | null>(null);
-  const [isSelectMode, setIsSelectMode] = useState(false);
 
   const onAppIndexerSyncPress = useCallback(() => {
     dispatch(
@@ -107,9 +103,13 @@ const IndexerIndex = withScrollPosition((props: IndexerIndexProps) => {
     dispatch(testAllIndexers());
   }, [dispatch]);
 
-  const onSelectModePress = useCallback(() => {
-    setIsSelectMode(!isSelectMode);
-  }, [isSelectMode, setIsSelectMode]);
+  const onManageIndexersPress = useCallback(() => {
+    setIsManageIndexersModalOpen(true);
+  }, [setIsManageIndexersModalOpen]);
+
+  const onManageIndexersModalClose = useCallback(() => {
+    setIsManageIndexersModalOpen(false);
+  }, [setIsManageIndexersModalOpen]);
 
   const onTableOptionChange = useCallback(
     (payload) => {
@@ -189,149 +189,130 @@ const IndexerIndex = withScrollPosition((props: IndexerIndexProps) => {
   const hasNoIndexer = !totalItems;
 
   return (
-    <SelectProvider items={items}>
-      <PageContent>
-        <PageToolbar>
-          <PageToolbarSection>
-            <PageToolbarButton
-              label={translate('AddIndexer')}
-              iconName={icons.ADD}
-              spinningName={icons.ADD}
-              onPress={onAddIndexerPress}
-            />
+    <PageContent title={translate('Indexers')}>
+      <PageToolbar>
+        <PageToolbarSection>
+          <PageToolbarButton
+            label={translate('AddIndexer')}
+            iconName={icons.ADD}
+            spinningName={icons.ADD}
+            onPress={onAddIndexerPress}
+          />
 
-            <PageToolbarSeparator />
+          <PageToolbarSeparator />
 
-            <PageToolbarButton
-              label={translate('SyncAppIndexers')}
-              iconName={icons.REFRESH}
-              spinningName={icons.REFRESH}
-              isSpinning={isSyncingIndexers}
-              isDisabled={hasNoIndexer}
-              onPress={onAppIndexerSyncPress}
-            />
+          <PageToolbarButton
+            label={translate('SyncAppIndexers')}
+            iconName={icons.REFRESH}
+            spinningName={icons.REFRESH}
+            isSpinning={isSyncingIndexers}
+            isDisabled={hasNoIndexer}
+            onPress={onAppIndexerSyncPress}
+          />
 
-            <PageToolbarButton
-              label={translate('TestAllIndexers')}
-              iconName={icons.TEST}
-              isSpinning={isTestingAll}
-              isDisabled={hasNoIndexer}
-              onPress={onTestAllPress}
-            />
+          <PageToolbarButton
+            label={translate('TestAllIndexers')}
+            iconName={icons.TEST}
+            isSpinning={isTestingAll}
+            isDisabled={hasNoIndexer}
+            onPress={onTestAllPress}
+          />
 
-            <PageToolbarSeparator />
+          <PageToolbarButton
+            label={translate('Manage Indexers')}
+            iconName={icons.MANAGE}
+            isDisabled={hasNoIndexer}
+            onPress={onManageIndexersPress}
+          />
+        </PageToolbarSection>
 
-            <IndexerIndexSelectModeButton
-              label={
-                isSelectMode
-                  ? translate('StopSelecting')
-                  : translate('SelectIndexers')
-              }
-              iconName={isSelectMode ? icons.SERIES_ENDED : icons.CHECK}
-              isSelectMode={isSelectMode}
-              overflowComponent={IndexerIndexSelectModeMenuItem}
-              onPress={onSelectModePress}
-            />
-
-            <IndexerIndexSelectAllButton
-              label={translate('SelectAll')}
-              isSelectMode={isSelectMode}
-              overflowComponent={IndexerIndexSelectAllMenuItem}
-            />
-          </PageToolbarSection>
-
-          <PageToolbarSection
-            alignContent={align.RIGHT}
-            collapseButtons={false}
+        <PageToolbarSection alignContent={align.RIGHT} collapseButtons={false}>
+          <TableOptionsModalWrapper
+            columns={columns}
+            optionsComponent={IndexerIndexTableOptions}
+            onTableOptionChange={onTableOptionChange}
           >
-            <TableOptionsModalWrapper
-              columns={columns}
-              optionsComponent={IndexerIndexTableOptions}
-              onTableOptionChange={onTableOptionChange}
-            >
-              <PageToolbarButton
-                label={translate('Options')}
-                iconName={icons.TABLE}
-              />
-            </TableOptionsModalWrapper>
-
-            <PageToolbarSeparator />
-
-            <IndexerIndexSortMenu
-              sortKey={sortKey}
-              sortDirection={sortDirection}
-              isDisabled={hasNoIndexer}
-              onSortSelect={onSortSelect}
+            <PageToolbarButton
+              label={translate('Options')}
+              iconName={icons.TABLE}
             />
+          </TableOptionsModalWrapper>
 
-            <IndexerIndexFilterMenu
-              selectedFilterKey={selectedFilterKey}
-              filters={filters}
-              customFilters={customFilters}
-              isDisabled={hasNoIndexer}
-              onFilterSelect={onFilterSelect}
-            />
-          </PageToolbarSection>
-        </PageToolbar>
-        <div className={styles.pageContentBodyWrapper}>
-          <PageContentBody
-            ref={scrollerRef}
-            className={styles.contentBody}
-            innerClassName={styles[`${view}InnerContentBody`]}
-            initialScrollTop={props.initialScrollTop}
-            onScroll={onScroll}
-          >
-            {isFetching && !isPopulated ? <LoadingIndicator /> : null}
+          <PageToolbarSeparator />
 
-            {!isFetching && !!error ? (
-              <div>{translate('UnableToLoadIndexers')}</div>
-            ) : null}
+          <IndexerIndexSortMenu
+            sortKey={sortKey}
+            sortDirection={sortDirection}
+            isDisabled={hasNoIndexer}
+            onSortSelect={onSortSelect}
+          />
 
-            {isLoaded ? (
-              <div className={styles.contentBodyContainer}>
-                <ViewComponent
-                  scrollerRef={scrollerRef}
-                  items={items}
-                  sortKey={sortKey}
-                  sortDirection={sortDirection}
-                  jumpToCharacter={jumpToCharacter}
-                  isSelectMode={isSelectMode}
-                  isSmallScreen={isSmallScreen}
-                />
+          <IndexerIndexFilterMenu
+            selectedFilterKey={selectedFilterKey}
+            filters={filters}
+            customFilters={customFilters}
+            isDisabled={hasNoIndexer}
+            onFilterSelect={onFilterSelect}
+          />
+        </PageToolbarSection>
+      </PageToolbar>
+      <div className={styles.pageContentBodyWrapper}>
+        <PageContentBody
+          ref={scrollerRef}
+          className={styles.contentBody}
+          innerClassName={styles[`${view}InnerContentBody`]}
+          initialScrollTop={props.initialScrollTop}
+          onScroll={onScroll}
+        >
+          {isFetching && !isPopulated ? <LoadingIndicator /> : null}
 
-                <IndexerIndexFooter />
-              </div>
-            ) : null}
+          {!isFetching && !!error ? (
+            <div>{translate('UnableToLoadIndexers')}</div>
+          ) : null}
 
-            {!error && isPopulated && !items.length ? (
-              <NoIndexer
-                totalItems={totalItems}
-                onAddIndexerPress={onAddIndexerPress}
+          {isLoaded ? (
+            <div className={styles.contentBodyContainer}>
+              <ViewComponent
+                scrollerRef={scrollerRef}
+                items={items}
+                sortKey={sortKey}
+                sortDirection={sortDirection}
+                jumpToCharacter={jumpToCharacter}
+                isSmallScreen={isSmallScreen}
               />
-            ) : null}
-          </PageContentBody>
-          {isLoaded && !!jumpBarItems.order.length ? (
-            <PageJumpBar
-              items={jumpBarItems}
-              onItemPress={onJumpBarItemPress}
+
+              <IndexerIndexFooter />
+            </div>
+          ) : null}
+
+          {!error && isPopulated && !items.length ? (
+            <NoIndexer
+              totalItems={totalItems}
+              onAddIndexerPress={onAddIndexerPress}
             />
           ) : null}
-        </div>
+        </PageContentBody>
+        {isLoaded && !!jumpBarItems.order.length ? (
+          <PageJumpBar items={jumpBarItems} onItemPress={onJumpBarItemPress} />
+        ) : null}
+      </div>
 
-        {isSelectMode ? <IndexerIndexSelectFooter /> : null}
+      <AddIndexerModal
+        isOpen={isAddIndexerModalOpen}
+        onModalClose={onAddIndexerModalClose}
+        onSelectIndexer={onEditIndexerPress}
+      />
 
-        <AddIndexerModal
-          isOpen={isAddIndexerModalOpen}
-          onModalClose={onAddIndexerModalClose}
-          onSelectIndexer={onEditIndexerPress}
-        />
+      <EditIndexerModalConnector
+        isOpen={isEditIndexerModalOpen}
+        onModalClose={onEditIndexerModalClose}
+      />
 
-        <EditIndexerModalConnector
-          isOpen={isEditIndexerModalOpen}
-          onModalClose={onEditIndexerModalClose}
-        />
-      </PageContent>
-    </SelectProvider>
+      <ManageIndexersModal
+        isOpen={isManageIndexersModalOpen}
+        onModalClose={onManageIndexersModalClose}
+      />
+    </PageContent>
   );
 }, 'indexerIndex');
 

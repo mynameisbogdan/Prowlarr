@@ -35,7 +35,6 @@ interface IndexerIndexTableProps {
   jumpToCharacter?: string;
   scrollTop?: number;
   scrollerRef: React.MutableRefObject<HTMLElement>;
-  isSelectMode: boolean;
   isSmallScreen: boolean;
 }
 
@@ -49,7 +48,7 @@ const Row: React.FC<ListChildComponentProps<RowItemData>> = ({
   style,
   data,
 }) => {
-  const { items, sortKey, columns, isSelectMode } = data;
+  const { items, sortKey, columns } = data;
 
   if (index >= items.length) {
     return null;
@@ -69,7 +68,6 @@ const Row: React.FC<ListChildComponentProps<RowItemData>> = ({
         indexerId={indexer.id}
         sortKey={sortKey}
         columns={columns}
-        isSelectMode={isSelectMode}
       />
     </div>
   );
@@ -85,7 +83,6 @@ function IndexerIndexTable(props: IndexerIndexTableProps) {
     sortKey,
     sortDirection,
     jumpToCharacter,
-    isSelectMode,
     isSmallScreen,
     scrollerRef,
   } = props;
@@ -181,7 +178,6 @@ function IndexerIndexTable(props: IndexerIndexTableProps) {
           columns={columns}
           sortKey={sortKey}
           sortDirection={sortDirection}
-          isSelectMode={isSelectMode}
         />
         <List<RowItemData>
           ref={listRef}
@@ -198,7 +194,7 @@ function IndexerIndexTable(props: IndexerIndexTableProps) {
             items,
             sortKey,
             columns,
-            isSelectMode,
+            isSelectMode: false,
           }}
         >
           {Row}
