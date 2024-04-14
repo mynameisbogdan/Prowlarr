@@ -1,6 +1,5 @@
 using FluentValidation;
 using NzbDrone.Core.Annotations;
-using NzbDrone.Core.ThingiProvider;
 using NzbDrone.Core.Validation;
 
 namespace NzbDrone.Core.Notifications.Slack
@@ -14,7 +13,7 @@ namespace NzbDrone.Core.Notifications.Slack
         }
     }
 
-    public class SlackSettings : IProviderConfig
+    public class SlackSettings : NotificationBaseSettings
     {
         private static readonly SlackSettingsValidator Validator = new SlackSettingsValidator();
 
@@ -30,7 +29,7 @@ namespace NzbDrone.Core.Notifications.Slack
         [FieldDefinition(3, Label = "Channel", HelpText = "Overrides the default channel for the incoming webhook (#other-channel)", Type = FieldType.Textbox)]
         public string Channel { get; set; }
 
-        public NzbDroneValidationResult Validate()
+        public override NzbDroneValidationResult Validate()
         {
             return new NzbDroneValidationResult(Validator.Validate(this));
         }

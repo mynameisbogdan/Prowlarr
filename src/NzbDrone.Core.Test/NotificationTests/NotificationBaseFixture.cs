@@ -3,7 +3,6 @@ using FluentAssertions;
 using FluentValidation.Results;
 using NUnit.Framework;
 using NzbDrone.Core.Notifications;
-using NzbDrone.Core.ThingiProvider;
 using NzbDrone.Core.Validation;
 using NzbDrone.Test.Common;
 
@@ -12,9 +11,9 @@ namespace NzbDrone.Core.Test.NotificationTests
     [TestFixture]
     public class NotificationBaseFixture : TestBase
     {
-        private class TestSetting : IProviderConfig
+        private class TestSetting : NotificationBaseSettings
         {
-            public NzbDroneValidationResult Validate()
+            public override NzbDroneValidationResult Validate()
             {
                 return new NzbDroneValidationResult();
             }

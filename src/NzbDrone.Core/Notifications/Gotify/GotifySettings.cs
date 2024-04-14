@@ -1,6 +1,5 @@
 using FluentValidation;
 using NzbDrone.Core.Annotations;
-using NzbDrone.Core.ThingiProvider;
 using NzbDrone.Core.Validation;
 
 namespace NzbDrone.Core.Notifications.Gotify
@@ -14,7 +13,7 @@ namespace NzbDrone.Core.Notifications.Gotify
         }
     }
 
-    public class GotifySettings : IProviderConfig
+    public class GotifySettings : NotificationBaseSettings
     {
         private static readonly GotifySettingsValidator Validator = new GotifySettingsValidator();
 
@@ -32,7 +31,7 @@ namespace NzbDrone.Core.Notifications.Gotify
         [FieldDefinition(2, Label = "Priority", Type = FieldType.Select, SelectOptions = typeof(GotifyPriority), HelpText = "Priority of the notification")]
         public int Priority { get; set; }
 
-        public NzbDroneValidationResult Validate()
+        public override NzbDroneValidationResult Validate()
         {
             return new NzbDroneValidationResult(Validator.Validate(this));
         }

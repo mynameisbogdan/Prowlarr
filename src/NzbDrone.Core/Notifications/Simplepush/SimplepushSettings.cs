@@ -1,6 +1,5 @@
 using FluentValidation;
 using NzbDrone.Core.Annotations;
-using NzbDrone.Core.ThingiProvider;
 using NzbDrone.Core.Validation;
 
 namespace NzbDrone.Core.Notifications.Simplepush
@@ -13,7 +12,7 @@ namespace NzbDrone.Core.Notifications.Simplepush
         }
     }
 
-    public class SimplepushSettings : IProviderConfig
+    public class SimplepushSettings : NotificationBaseSettings
     {
         private static readonly SimplepushSettingsValidator Validator = new SimplepushSettingsValidator();
 
@@ -25,7 +24,7 @@ namespace NzbDrone.Core.Notifications.Simplepush
 
         public bool IsValid => !string.IsNullOrWhiteSpace(Key);
 
-        public NzbDroneValidationResult Validate()
+        public override NzbDroneValidationResult Validate()
         {
             return new NzbDroneValidationResult(Validator.Validate(this));
         }

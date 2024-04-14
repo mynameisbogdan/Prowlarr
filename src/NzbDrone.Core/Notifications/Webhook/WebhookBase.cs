@@ -1,10 +1,9 @@
 using NzbDrone.Core.Configuration;
-using NzbDrone.Core.ThingiProvider;
 
 namespace NzbDrone.Core.Notifications.Webhook
 {
     public abstract class WebhookBase<TSettings> : NotificationBase<TSettings>
-        where TSettings : IProviderConfig, new()
+        where TSettings : NotificationBaseSettings, new()
     {
         private readonly IConfigFileProvider _configFileProvider;
         private readonly IConfigService _configService;

@@ -1,3 +1,4 @@
+using Equ;
 using FluentValidation;
 using NzbDrone.Core.Annotations;
 using NzbDrone.Core.Validation;
@@ -14,7 +15,7 @@ namespace NzbDrone.Core.Indexers.Settings
         }
     }
 
-    public class NoAuthTorrentBaseSettings : ITorrentIndexerSettings
+    public class NoAuthTorrentBaseSettings : MemberwiseEquatable<NoAuthTorrentBaseSettings>, ITorrentIndexerSettings
     {
         private static readonly NoAuthSettingsValidator<NoAuthTorrentBaseSettings> Validator = new ();
 

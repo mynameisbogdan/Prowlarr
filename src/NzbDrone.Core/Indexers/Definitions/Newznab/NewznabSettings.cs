@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Text.RegularExpressions;
+using Equ;
 using FluentValidation;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Annotations;
@@ -46,7 +47,7 @@ namespace NzbDrone.Core.Indexers.Newznab
         }
     }
 
-    public class NewznabSettings : IIndexerSettings
+    public class NewznabSettings : MemberwiseEquatable<NewznabSettings>, IIndexerSettings
     {
         private static readonly NewznabSettingsValidator Validator = new ();
 
@@ -75,6 +76,7 @@ namespace NzbDrone.Core.Indexers.Newznab
         [FieldDefinition(7)]
         public IndexerBaseSettings BaseSettings { get; set; } = new ();
 
+        [MemberwiseEqualityIgnore]
         public NewznabCapabilitiesSettings Capabilities { get; set; }
 
         // Field 8 is used by TorznabSettings MinimumSeeders

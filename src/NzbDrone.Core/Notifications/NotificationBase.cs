@@ -6,7 +6,7 @@ using NzbDrone.Core.ThingiProvider;
 namespace NzbDrone.Core.Notifications
 {
     public abstract class NotificationBase<TSettings> : INotification
-        where TSettings : IProviderConfig, new()
+        where TSettings : NotificationBaseSettings, new()
     {
         protected const string RELEASE_GRABBED_TITLE = "Release Grabbed";
         protected const string HEALTH_ISSUE_TITLE = "Health Check Failure";

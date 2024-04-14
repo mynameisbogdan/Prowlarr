@@ -1,3 +1,4 @@
+using Equ;
 using FluentValidation;
 using NzbDrone.Core.Annotations;
 using NzbDrone.Core.Validation;
@@ -14,7 +15,7 @@ namespace NzbDrone.Core.Indexers.Headphones
         }
     }
 
-    public class HeadphonesSettings : IIndexerSettings
+    public class HeadphonesSettings : MemberwiseEquatable<HeadphonesSettings>, IIndexerSettings
     {
         private static readonly HeadphonesSettingsValidator Validator = new ();
 

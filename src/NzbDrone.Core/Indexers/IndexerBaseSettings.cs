@@ -1,3 +1,4 @@
+using Equ;
 using FluentValidation;
 using NzbDrone.Core.Annotations;
 
@@ -19,7 +20,7 @@ namespace NzbDrone.Core.Indexers
         }
     }
 
-    public class IndexerBaseSettings
+    public class IndexerBaseSettings : MemberwiseEquatable<IndexerBaseSettings>
     {
         [FieldDefinition(1, Type = FieldType.Number, Label = "IndexerSettingsQueryLimit", HelpText = "IndexerSettingsQueryLimitHelpText", Advanced = true)]
         public int? QueryLimit { get; set; }

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using FluentValidation;
 using NzbDrone.Core.Annotations;
-using NzbDrone.Core.ThingiProvider;
 using NzbDrone.Core.Validation;
 
 namespace NzbDrone.Core.Notifications.Email
@@ -26,7 +25,7 @@ namespace NzbDrone.Core.Notifications.Email
         }
     }
 
-    public class EmailSettings : IProviderConfig
+    public class EmailSettings : NotificationBaseSettings
     {
         private static readonly EmailSettingsValidator Validator = new EmailSettingsValidator();
 
@@ -65,7 +64,7 @@ namespace NzbDrone.Core.Notifications.Email
         [FieldDefinition(8, Label = "BCC Address(es)", HelpText = "Comma separated list of email bcc recipients", Placeholder = "example@email.com,example1@email.com", Advanced = true)]
         public IEnumerable<string> Bcc { get; set; }
 
-        public NzbDroneValidationResult Validate()
+        public override NzbDroneValidationResult Validate()
         {
             return new NzbDroneValidationResult(Validator.Validate(this));
         }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
+using Equ;
 using FluentValidation;
 using Newtonsoft.Json.Linq;
 using NLog;
@@ -1178,7 +1179,7 @@ namespace NzbDrone.Core.Indexers.Definitions
         }
     }
 
-    public class NzbIndexSettings : IIndexerSettings
+    public class NzbIndexSettings : MemberwiseEquatable<NzbIndexSettings>, IIndexerSettings
     {
         private static readonly NzbIndexSettingsValidator Validator = new ();
 

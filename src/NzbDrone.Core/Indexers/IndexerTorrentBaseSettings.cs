@@ -1,3 +1,4 @@
+using Equ;
 using FluentValidation;
 using NzbDrone.Core.Annotations;
 using NzbDrone.Core.Validation;
@@ -50,7 +51,7 @@ namespace NzbDrone.Core.Indexers
         }
     }
 
-    public class IndexerTorrentBaseSettings
+    public class IndexerTorrentBaseSettings : MemberwiseEquatable<IndexerTorrentBaseSettings>
     {
         [FieldDefinition(1, Type = FieldType.Number, Label = "IndexerSettingsAppsMinimumSeeders", HelpText = "IndexerSettingsAppsMinimumSeedersHelpText", Advanced = true)]
         public int? AppMinimumSeeders { get; set; }

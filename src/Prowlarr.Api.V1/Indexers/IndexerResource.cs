@@ -13,8 +13,8 @@ namespace Prowlarr.Api.V1.Indexers
 {
     public class IndexerResource : ProviderResource<IndexerResource>
     {
-        public string[] IndexerUrls { get; set; }
-        public string[] LegacyUrls { get; set; }
+        public IEnumerable<string> IndexerUrls { get; set; }
+        public IEnumerable<string> LegacyUrls { get; set; }
         public string DefinitionName { get; set; }
         public string Description { get; set; }
         public string Language { get; set; }

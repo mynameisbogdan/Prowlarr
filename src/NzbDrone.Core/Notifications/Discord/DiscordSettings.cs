@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using FluentValidation;
 using NzbDrone.Core.Annotations;
-using NzbDrone.Core.ThingiProvider;
 using NzbDrone.Core.Validation;
 
 namespace NzbDrone.Core.Notifications.Discord
@@ -14,7 +13,7 @@ namespace NzbDrone.Core.Notifications.Discord
         }
     }
 
-    public class DiscordSettings : IProviderConfig
+    public class DiscordSettings : NotificationBaseSettings
     {
         public DiscordSettings()
         {
@@ -47,7 +46,7 @@ namespace NzbDrone.Core.Notifications.Discord
         [FieldDefinition(4, Label = "On Grab Fields", Advanced = true, SelectOptions = typeof(DiscordGrabFieldType), HelpText = "Change the fields that are passed in for this 'on grab' notification", Type = FieldType.Select)]
         public IEnumerable<int> GrabFields { get; set; }
 
-        public NzbDroneValidationResult Validate()
+        public override NzbDroneValidationResult Validate()
         {
             return new NzbDroneValidationResult(Validator.Validate(this));
         }
