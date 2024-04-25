@@ -66,7 +66,28 @@ namespace NzbDrone.Core.Indexers.Definitions
 
         protected override IList<ReleaseInfo> CleanupReleases(IEnumerable<ReleaseInfo> releases, SearchCriteriaBase searchCriteria)
         {
-            var cleanReleases = base.CleanupReleases(releases, searchCriteria);
+            var releaseInfos = releases.ToList();
+
+            if (searchCriteria.IsRssSearch && !releaseInfos.Any() && Settings.UseFreeleechToken)
+            {
+                releaseInfos.Add(new TorrentInfo
+                {
+                    Guid = Settings.BaseUrl,
+                    InfoUrl = Settings.BaseUrl,
+                    DownloadUrl = Settings.BaseUrl,
+                    Title = "NO AVAILABLE RELEASES WITH THE OPTION 'USE FREELEECH TOKENS' ENABLED",
+                    Categories = new List<IndexerCategory> { NewznabStandardCategory.Other },
+                    PublishDate = default,
+                    Size = 0,
+                    Grabs = 0,
+                    Seeders = 0,
+                    Peers = 0,
+                    DownloadVolumeFactor = 0,
+                    UploadVolumeFactor = 1
+                });
+            }
+
+            var cleanReleases = base.CleanupReleases(releaseInfos, searchCriteria);
 
             if (searchCriteria.IsRssSearch)
             {
