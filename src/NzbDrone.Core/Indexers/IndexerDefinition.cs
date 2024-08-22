@@ -30,5 +30,7 @@ namespace NzbDrone.Core.Indexers
         public LazyLoaded<AppSyncProfile> AppProfile { get; set; }
 
         public List<SettingsField> ExtraFields { get; set; } = new ();
+
+        public bool IsObsolete { get; set; }
     }
 }

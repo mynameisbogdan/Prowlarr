@@ -57,6 +57,7 @@ namespace NzbDrone.Core.Datastore
                   .Ignore(i => i.SupportsRedirect)
                   .Ignore(i => i.SupportsPagination)
                   .Ignore(i => i.Capabilities)
+                  .Ignore(i => i.IsObsolete)
                   .HasOne(a => a.AppProfile, a => a.AppProfileId);
 
             Mapper.Entity<DownloadClientDefinition>("DownloadClients").RegisterModel()

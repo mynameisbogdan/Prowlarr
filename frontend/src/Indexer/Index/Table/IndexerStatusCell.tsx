@@ -8,7 +8,11 @@ import translate from 'Utilities/String/translate';
 import DisabledIndexerInfo from './DisabledIndexerInfo';
 import styles from './IndexerStatusCell.css';
 
-function getIconKind(enabled: boolean, redirect: boolean) {
+function getIconKind(enabled: boolean, redirect: boolean, isObsolete: boolean) {
+  if (isObsolete) {
+    return kinds.WARNING;
+  }
+
   if (enabled) {
     return redirect ? kinds.INFO : kinds.SUCCESS;
   }
@@ -16,7 +20,11 @@ function getIconKind(enabled: boolean, redirect: boolean) {
   return kinds.DEFAULT;
 }
 
-function getIconName(enabled: boolean, redirect: boolean) {
+function getIconName(enabled: boolean, redirect: boolean, isObsolete: boolean) {
+  if (isObsolete) {
+    return icons.WARNING;
+  }
+
   if (enabled) {
     return redirect ? icons.REDIRECT : icons.CHECK;
   }
@@ -24,7 +32,15 @@ function getIconName(enabled: boolean, redirect: boolean) {
   return icons.BLOCKLIST;
 }
 
-function getIconTooltip(enabled: boolean, redirect: boolean) {
+function getIconTooltip(
+  enabled: boolean,
+  redirect: boolean,
+  isObsolete: boolean
+) {
+  if (isObsolete) {
+    return translate('Deprecated');
+  }
+
   if (enabled) {
     return redirect ? translate('EnabledRedirected') : translate('Enabled');
   }
@@ -37,6 +53,7 @@ interface IndexerStatusCellProps {
   enabled: boolean;
   redirect: boolean;
   status?: IndexerStatus;
+  isObsolete?: boolean;
   longDateFormat: string;
   timeFormat: string;
   component?: React.ElementType;
@@ -48,6 +65,7 @@ function IndexerStatusCell(props: IndexerStatusCellProps) {
     enabled,
     redirect,
     status,
+    isObsolete = false,
     longDateFormat,
     timeFormat,
     component: Component = VirtualTableRowCell,
@@ -58,9 +76,9 @@ function IndexerStatusCell(props: IndexerStatusCellProps) {
     <Component className={className} {...otherProps}>
       <Icon
         className={styles.statusIcon}
-        kind={getIconKind(enabled, redirect)}
-        name={getIconName(enabled, redirect)}
-        title={getIconTooltip(enabled, redirect)}
+        kind={getIconKind(enabled, redirect, isObsolete)}
+        name={getIconName(enabled, redirect, isObsolete)}
+        title={getIconTooltip(enabled, redirect, isObsolete)}
       />
       {status ? (
         <Popover

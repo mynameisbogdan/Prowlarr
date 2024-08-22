@@ -48,6 +48,7 @@ function IndexerIndexRow(props: IndexerIndexRowProps) {
     fields,
     added,
     capabilities,
+    isObsolete,
   } = indexer as Indexer;
 
   const baseUrl =
@@ -140,6 +141,7 @@ function IndexerIndexRow(props: IndexerIndexRowProps) {
               enabled={enable}
               redirect={redirect}
               status={status}
+              isObsolete={isObsolete}
               longDateFormat={longDateFormat}
               timeFormat={timeFormat}
               component={VirtualTableRowCell}

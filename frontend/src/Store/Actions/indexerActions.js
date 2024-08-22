@@ -100,7 +100,7 @@ export const filterPredicates = {
 };
 
 export const sortPredicates = {
-  status: function({ enable, redirect }) {
+  status: function({ enable, redirect, isObsolete = false }) {
     let result = 0;
 
     if (redirect) {
@@ -109,6 +109,10 @@ export const sortPredicates = {
 
     if (enable) {
       result += 2;
+    }
+
+    if (isObsolete) {
+      result += 4;
     }
 
     return result;

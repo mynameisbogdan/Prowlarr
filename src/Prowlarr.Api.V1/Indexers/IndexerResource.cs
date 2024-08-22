@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Annotations;
 using NzbDrone.Core.Indexers;
@@ -8,6 +9,7 @@ using NzbDrone.Core.Indexers.Definitions.Cardigann;
 using NzbDrone.Core.IndexerVersions;
 using NzbDrone.Core.Parser;
 using Prowlarr.Http.ClientSchema;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace Prowlarr.Api.V1.Indexers
 {
@@ -34,6 +36,11 @@ namespace Prowlarr.Api.V1.Indexers
         public DateTime Added { get; set; }
         public IndexerStatusResource Status { get; set; }
         public string SortName { get; set; }
+
+        // Hiding this so people don't think its usable
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        [SwaggerIgnore]
+        public bool IsObsolete { get; set; }
     }
 
     public class IndexerResourceMapper : ProviderResourceMapper<IndexerResource, IndexerDefinition>
@@ -100,6 +107,7 @@ namespace Prowlarr.Api.V1.Indexers
             resource.DownloadClientId = definition.DownloadClientId;
             resource.Added = definition.Added;
             resource.SortName = definition.Name.NormalizeTitle();
+            resource.IsObsolete = definition.IsObsolete;
 
             return resource;
         }

@@ -65,6 +65,7 @@ interface Indexer extends ModelBase {
   implementation: string;
   configContract: string;
   infoLink: string;
+  isObsolete?: boolean;
 }
 
 export default Indexer;

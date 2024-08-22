@@ -58,7 +58,9 @@ namespace NzbDrone.Core.Indexers
                     catch (Exception ex)
                     {
                         // Skip indexer if we fail in Cardigann mapping
-                        _logger.Debug(ex, "Indexer '{0}' has no definition", definition.Name);
+                        _logger.Warn(ex, "Indexer '{0}' has no definition", definition.Name);
+
+                        definition.IsObsolete = true;
                     }
                 }
 
@@ -209,6 +211,7 @@ namespace NzbDrone.Core.Indexers
                 definition.Encoding = provider.Encoding;
                 definition.Language ??= provider.Language;
                 definition.Capabilities ??= provider.Capabilities;
+                definition.IsObsolete = provider.IsObsolete();
             }
         }
 
