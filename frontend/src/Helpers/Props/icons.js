@@ -78,6 +78,7 @@ import {
   faLock as fasLock,
   faMagnet as fasMagnet,
   faMedkit as fasMedkit,
+  faMessage as fasMessage,
   faMinus as fasMinus,
   faMusic as fasMusic,
   faPause as fasPause,
@@ -187,6 +188,7 @@ export const LOGOUT = fasSignOutAlt;
 export const MAGNET = fasMagnet;
 export const MANAGE = fasListCheck;
 export const MEDIA_INFO = farFileInvoice;
+export const MESSAGE = fasMessage;
 export const MISSING = fasExclamationTriangle;
 export const MONITORED = fasBookmark;
 export const NETWORK = fasBroadcastTower;

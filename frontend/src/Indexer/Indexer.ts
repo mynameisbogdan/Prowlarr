@@ -1,5 +1,6 @@
 import ModelBase from 'App/ModelBase';
 import DownloadProtocol from 'DownloadClient/DownloadProtocol';
+import ProviderMessage from 'typings/ProviderMessage';
 
 export interface IndexerStatus extends ModelBase {
   disabledTill: Date;
@@ -64,6 +65,7 @@ interface Indexer extends ModelBase {
   implementationName: string;
   implementation: string;
   configContract: string;
+  message?: ProviderMessage;
   infoLink: string;
 }
 

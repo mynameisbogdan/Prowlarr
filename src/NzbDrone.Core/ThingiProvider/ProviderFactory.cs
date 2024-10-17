@@ -188,7 +188,7 @@ namespace NzbDrone.Core.ThingiProvider
         public virtual void SetProviderCharacteristics(TProvider provider, TProviderDefinition definition)
         {
             definition.ImplementationName = provider.Name;
-            definition.Message = provider.Message;
+            definition.Message ??= provider.Message;
         }
 
         private void RemoveMissingImplementations()

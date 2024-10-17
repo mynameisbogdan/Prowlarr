@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import React from 'react';
+import Alert from 'Components/Alert';
 import Form from 'Components/Form/Form';
 import FormGroup from 'Components/Form/FormGroup';
 import FormInputGroup from 'Components/Form/FormInputGroup';
@@ -52,7 +53,8 @@ function EditIndexerModalContent(props) {
     fields,
     priority,
     protocol,
-    downloadClientId
+    downloadClientId,
+    message
   } = item;
 
   const indexerDisplayName = implementationName === definitionName ? implementationName : `${implementationName} (${definitionName})`;
@@ -80,6 +82,17 @@ function EditIndexerModalContent(props) {
         {
           !isFetching && !error &&
             <Form {...otherProps}>
+              {
+                message ?
+                  <Alert
+                    className={styles.message}
+                    kind={message.value.type}
+                  >
+                    {message.value.message}
+                  </Alert> :
+                  null
+              }
+
               <FormGroup>
                 <FormLabel>{translate('Name')}</FormLabel>
 

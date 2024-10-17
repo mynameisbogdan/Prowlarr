@@ -315,9 +315,26 @@ namespace NzbDrone.Core.IndexerVersions
 
                 _httpClient.DownloadFile($"https://indexers.prowlarr.com/{DEFINITION_BRANCH}/{DEFINITION_VERSION}/package.zip", saveFile);
 
+                var di = new DirectoryInfo(definitionsFolder);
+
                 using (var archive = ZipFile.OpenRead(saveFile))
                 {
                     archive.ExtractToDirectory(definitionsFolder, true);
+
+                    // Invalidate definitions not included in the new package.zip
+                    var archiveEntries = archive.Entries.Select(x => x.Name).ToArray();
+
+                    if (archiveEntries.Any())
+                    {
+                        var existingDefinitions = di.EnumerateFiles("*.yml", SearchOption.TopDirectoryOnly);
+                        var extraneousFiles = existingDefinitions.Where(e => !archiveEntries.Contains(e.Name));
+
+                        foreach (var file in extraneousFiles)
+                        {
+                            _logger.Debug("Moving extraneous definition '{0}'.", file.FullName);
+                            _diskProvider.MoveFile(file.FullName, $"{file.FullName}.bak", true);
+                        }
+                    }
                 }
 
                 _diskProvider.DeleteFile(saveFile);

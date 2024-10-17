@@ -1,9 +1,11 @@
 import React from 'react';
+import Alert from 'Components/Alert';
 import Icon from 'Components/Icon';
 import VirtualTableRowCell from 'Components/Table/Cells/TableRowCell';
 import Popover from 'Components/Tooltip/Popover';
 import { icons, kinds, tooltipPositions } from 'Helpers/Props';
 import { IndexerStatus } from 'Indexer/Indexer';
+import ProviderMessage from 'typings/ProviderMessage';
 import translate from 'Utilities/String/translate';
 import DisabledIndexerInfo from './DisabledIndexerInfo';
 import styles from './IndexerStatusCell.css';
@@ -37,6 +39,7 @@ interface IndexerStatusCellProps {
   enabled: boolean;
   redirect: boolean;
   status?: IndexerStatus;
+  message?: ProviderMessage;
   longDateFormat: string;
   timeFormat: string;
   component?: React.ElementType;
@@ -48,6 +51,7 @@ function IndexerStatusCell(props: IndexerStatusCellProps) {
     enabled,
     redirect,
     status,
+    message,
     longDateFormat,
     timeFormat,
     component: Component = VirtualTableRowCell,
@@ -75,16 +79,29 @@ function IndexerStatusCell(props: IndexerStatusCellProps) {
           }
           title={translate('IndexerDisabled')}
           body={
-            <div>
-              <DisabledIndexerInfo
-                mostRecentFailure={status.mostRecentFailure}
-                initialFailure={status.initialFailure}
-                disabledTill={status.disabledTill}
-                longDateFormat={longDateFormat}
-                timeFormat={timeFormat}
-              />
-            </div>
+            <DisabledIndexerInfo
+              mostRecentFailure={status.mostRecentFailure}
+              initialFailure={status.initialFailure}
+              disabledTill={status.disabledTill}
+              longDateFormat={longDateFormat}
+              timeFormat={timeFormat}
+            />
           }
+          position={tooltipPositions.BOTTOM}
+        />
+      ) : null}
+
+      {message ? (
+        <Popover
+          anchor={
+            <Icon
+              className={styles.statusIcon}
+              kind={kinds.WARNING}
+              name={icons.MESSAGE}
+            />
+          }
+          title={translate('Message')}
+          body={<Alert kind={message.type}>{message.message}</Alert>}
           position={tooltipPositions.BOTTOM}
         />
       ) : null}

@@ -52,6 +52,7 @@ function IndexerInfoModalContent(props: IndexerInfoModalContentProps) {
     protocol,
     privacy,
     capabilities = {} as IndexerCapabilities,
+    message,
   } = useIndexer(indexerId) as Indexer;
 
   const [selectedTab, setSelectedTab] = useState(TABS[0]);
@@ -124,6 +125,12 @@ function IndexerInfoModalContent(props: IndexerInfoModalContentProps) {
           </TabList>
           <TabPanel>
             <div className={styles.tabContent}>
+              {message ? (
+                <Alert className={styles.message} kind={message.type}>
+                  {message.message}
+                </Alert>
+              ) : null}
+
               <FieldSet legend={translate('IndexerDetails')}>
                 <div>
                   <DescriptionList>

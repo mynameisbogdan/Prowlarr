@@ -59,6 +59,8 @@ namespace NzbDrone.Core.Indexers
                     {
                         // Skip indexer if we fail in Cardigann mapping
                         _logger.Debug(ex, "Indexer '{0}' has no definition", definition.Name);
+
+                        definition.Message = new ProviderMessage($"Indexer '{definition.Name}' has no definition and will not work. Please remove and (or) re-add to Prowlarr.", ProviderMessageType.Danger);
                     }
                 }
 
@@ -199,7 +201,7 @@ namespace NzbDrone.Core.Indexers
             definition.SupportsRedirect = provider.SupportsRedirect;
             definition.SupportsPagination = provider.SupportsPagination;
 
-            //We want to use the definition Caps and Privacy for Cardigann instead of the provider.
+            // We want to use the definition Caps and Privacy for Cardigann instead of the provider.
             if (definition.Implementation != nameof(Cardigann))
             {
                 definition.IndexerUrls = provider.IndexerUrls;
@@ -209,6 +211,11 @@ namespace NzbDrone.Core.Indexers
                 definition.Encoding = provider.Encoding;
                 definition.Language ??= provider.Language;
                 definition.Capabilities ??= provider.Capabilities;
+
+                if (provider.IsObsolete())
+                {
+                    definition.Message = new ProviderMessage($"Indexer '{definition.Name}' is obsolete or have been updated. Please remove and (or) re-add to Prowlarr.", ProviderMessageType.Danger);
+                }
             }
         }
 

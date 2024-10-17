@@ -16,6 +16,6 @@
     {
         Info,
         Warning,
-        Error
+        Danger
     }
 }
