@@ -102,7 +102,8 @@ namespace NzbDrone.Core.Indexers.Definitions.HDBits
 
         private string GetTitle(TorrentQueryResponse item)
         {
-            return _settings.UseFilenames && item.FileName.IsNotNullOrWhiteSpace()
+            // Use release name for XXX content and full discs
+            return item.TypeCategory != 7 && item.TypeMedium != 1 && _settings.UseFilenames && item.FileName.IsNotNullOrWhiteSpace()
                 ? item.FileName.Replace(".torrent", "", StringComparison.InvariantCultureIgnoreCase)
                 : item.Name;
         }
