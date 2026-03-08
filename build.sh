@@ -51,11 +51,7 @@ LintUI()
     ProgressEnd 'ESLint'
 
     ProgressStart 'Stylelint'
-    if [ "$os" = "windows" ]; then
-        yarn stylelint-windows
-    else
-        yarn stylelint-linux
-    fi
+    yarn stylelint
     ProgressEnd 'Stylelint'
 }
 
