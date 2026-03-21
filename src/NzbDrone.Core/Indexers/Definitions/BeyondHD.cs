@@ -61,7 +61,7 @@ namespace NzbDrone.Core.Indexers.Definitions
             {
                 TvSearchParams = new List<TvSearchParam>
                 {
-                    TvSearchParam.Q, TvSearchParam.Season, TvSearchParam.Ep, TvSearchParam.ImdbId
+                    TvSearchParam.Q, TvSearchParam.Season, TvSearchParam.Ep, TvSearchParam.ImdbId, TvSearchParam.TmdbId
                 },
                 MovieSearchParams = new List<MovieSearchParam>
                 {
@@ -92,7 +92,7 @@ namespace NzbDrone.Core.Indexers.Definitions
             _capabilities = capabilities;
         }
 
-        private IEnumerable<IndexerRequest> GetPagedRequests(SearchCriteriaBase searchCriteria, string searchTerm, string imdbId = null, int tmdbId = 0)
+        private IEnumerable<IndexerRequest> GetPagedRequests(SearchCriteriaBase searchCriteria, string searchTerm, string imdbId = null, int? tmdbId = null)
         {
             var body = new Dictionary<string, object>
             {
@@ -124,9 +124,9 @@ namespace NzbDrone.Core.Indexers.Definitions
             {
                 body.Add("imdb_id", imdbId);
             }
-            else if (tmdbId > 0)
+            else if (tmdbId is > 0)
             {
-                body.Add("tmdb_id", $"movie/{tmdbId}");
+                body.Add("tmdb_id", $"{(searchCriteria is TvSearchCriteria ? "tv" : "movie")}/{tmdbId.Value}");
             }
 
             if (searchTerm.IsNotNullOrWhiteSpace())
@@ -181,7 +181,7 @@ namespace NzbDrone.Core.Indexers.Definitions
         {
             var pageableRequests = new IndexerPageableRequestChain();
 
-            pageableRequests.Add(GetPagedRequests(searchCriteria, searchCriteria.SanitizedSearchTerm, searchCriteria.FullImdbId, searchCriteria.TmdbId.GetValueOrDefault()));
+            pageableRequests.Add(GetPagedRequests(searchCriteria, searchCriteria.SanitizedSearchTerm, searchCriteria.FullImdbId, searchCriteria.TmdbId));
 
             return pageableRequests;
         }
@@ -208,7 +208,7 @@ namespace NzbDrone.Core.Indexers.Definitions
                 searchTerm = $"{searchCriteria.SanitizedSearchTerm} {showDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}";
             }
 
-            pageableRequests.Add(GetPagedRequests(searchCriteria, searchTerm, searchCriteria.FullImdbId));
+            pageableRequests.Add(GetPagedRequests(searchCriteria, searchTerm, searchCriteria.FullImdbId, searchCriteria.TmdbId));
 
             return pageableRequests;
         }
@@ -458,59 +458,60 @@ namespace NzbDrone.Core.Indexers.Definitions
     public class BeyondHDResponse
     {
         [JsonPropertyName("status_code")]
-        public int StatusCode { get; set; }
+        public int StatusCode { get; init; }
 
         [JsonPropertyName("status_message")]
-        public string StatusMessage { get; set; }
-        public List<BeyondHDTorrent> Results { get; set; }
+        public string StatusMessage { get; init; }
+
+        public IReadOnlyList<BeyondHDTorrent> Results { get; init; } = [];
     }
 
     public class BeyondHDTorrent
     {
-        public string Name { get; set; }
+        public string Name { get; init; }
 
         [JsonPropertyName("info_hash")]
-        public string InfoHash { get; set; }
-        public string Category { get; set; }
-        public string Type { get; set; }
-        public long Size { get; set; }
+        public string InfoHash { get; init; }
+        public string Category { get; init; }
+        public string Type { get; init; }
+        public long Size { get; init; }
 
         [JsonPropertyName("times_completed")]
-        public int Grabs { get; set; }
+        public int Grabs { get; init; }
 
-        public int Seeders { get; set; }
-        public int Leechers { get; set; }
+        public int Seeders { get; init; }
+        public int Leechers { get; init; }
 
-        public string Audios { get; set; }
-        public string Subtitles { get; set; }
+        public string Audios { get; init; }
+        public string Subtitles { get; init; }
 
         [JsonPropertyName("created_at")]
-        public string CreatedAt { get; set; }
+        public string CreatedAt { get; init; }
 
         [JsonPropertyName("download_url")]
-        public string DownloadLink { get; set; }
+        public string DownloadLink { get; init; }
 
         [JsonPropertyName("url")]
-        public string InfoUrl { get; set; }
+        public string InfoUrl { get; init; }
 
         [JsonPropertyName("imdb_id")]
-        public string ImdbId { get; set; }
+        public string ImdbId { get; init; }
 
         [JsonPropertyName("tmdb_id")]
-        public string TmdbId { get; set; }
+        public string TmdbId { get; init; }
 
-        public bool Freeleech { get; set; }
+        public bool Freeleech { get; init; }
 
-        public bool Promo25 { get; set; }
+        public bool Promo25 { get; init; }
 
-        public bool Promo50 { get; set; }
+        public bool Promo50 { get; init; }
 
-        public bool Promo75 { get; set; }
+        public bool Promo75 { get; init; }
 
-        public bool Limited { get; set; }
+        public bool Limited { get; init; }
 
-        public bool Exclusive { get; set; }
+        public bool Exclusive { get; init; }
 
-        public bool Internal { get; set; }
+        public bool Internal { get; init; }
     }
 }
