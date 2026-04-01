@@ -86,7 +86,7 @@ namespace NzbDrone.Core.Test.IndexerTests.NewznabTests
 
             var page = results.GetAllTiers().First().First();
 
-            page.Url.Query.Should().NotContain("imdbid=0076759");
+            page.Url.Query.Should().NotContain("imdbid=tt0076759");
             page.Url.Query.Should().Contain("q=Star");
         }
 
@@ -101,7 +101,7 @@ namespace NzbDrone.Core.Test.IndexerTests.NewznabTests
 
             var page = results.GetAllTiers().First().First();
 
-            page.Url.Query.Should().Contain("imdbid=0076759");
+            page.Url.Query.Should().Contain("imdbid=tt0076759");
         }
 
         [Test]
@@ -130,7 +130,7 @@ namespace NzbDrone.Core.Test.IndexerTests.NewznabTests
             var page = results.GetAllTiers().First().First();
 
             page.Url.Query.Should().Contain("tmdbid=11");
-            page.Url.Query.Should().NotContain("imdbid=0076759");
+            page.Url.Query.Should().NotContain("imdbid=tt0076759");
         }
 
         [Test]
@@ -146,7 +146,7 @@ namespace NzbDrone.Core.Test.IndexerTests.NewznabTests
             var page = results.GetTier(0).First().First();
 
             page.Url.Query.Should().Contain("tmdbid=11");
-            page.Url.Query.Should().Contain("imdbid=0076759");
+            page.Url.Query.Should().Contain("imdbid=tt0076759");
         }
 
         [Test]
@@ -188,7 +188,7 @@ namespace NzbDrone.Core.Test.IndexerTests.NewznabTests
             var pageTier2 = results.GetTier(0).First().First();
 
             pageTier2.Url.Query.Should().NotContain("tmdbid=11");
-            pageTier2.Url.Query.Should().NotContain("imdbid=0076759");
+            pageTier2.Url.Query.Should().NotContain("imdbid=tt0076759");
             pageTier2.Url.Query.Should().Contain("q=");
         }
 

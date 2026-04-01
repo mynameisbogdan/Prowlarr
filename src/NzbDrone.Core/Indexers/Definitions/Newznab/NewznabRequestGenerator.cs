@@ -41,7 +41,7 @@ namespace NzbDrone.Core.Indexers.Newznab
 
             if (searchCriteria.ImdbId.IsNotNullOrWhiteSpace() && capabilities.MovieSearchImdbAvailable)
             {
-                parameters.Set("imdbid", searchCriteria.ImdbId);
+                parameters.Set("imdbid", searchCriteria.FullImdbId);
             }
 
             if (searchCriteria.TraktId.HasValue && capabilities.MovieSearchTraktAvailable)
@@ -135,7 +135,7 @@ namespace NzbDrone.Core.Indexers.Newznab
 
             if (searchCriteria.ImdbId.IsNotNullOrWhiteSpace() && capabilities.TvSearchImdbAvailable)
             {
-                parameters.Set("imdbid", searchCriteria.ImdbId);
+                parameters.Set("imdbid", searchCriteria.FullImdbId);
             }
 
             if (searchCriteria.TvMazeId.HasValue && capabilities.TvSearchTvMazeAvailable)
