@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Globalization;
 using System.IO;
@@ -301,7 +302,7 @@ namespace NzbDrone.Core.Indexers.Definitions
         };
         private static readonly HashSet<string> ExcludedFileExtensions = new(StringComparer.OrdinalIgnoreCase) { ".mka", ".mds", ".md5", ".nfo", ".sfv", ".ass", ".mks", ".srt", ".ssa", ".sup", ".jpeg", ".jpg", ".png", ".otf", ".ttf" };
 
-        private static readonly string[] PropertiesSeparator = { " | ", " / " };
+        private static readonly string[] PropertiesSeparator = [" | ", " / "];
 
         private readonly AnimeBytesSettings _settings;
 
@@ -626,7 +627,9 @@ namespace NzbDrone.Core.Indexers.Definitions
 
                     var useYearInTitle = year is > 0 && torrent.Files.Any(f => f.FileName.Contains(year.Value.ToString()));
 
-                    foreach (var title in synonyms)
+                    var titles = ImproveTitles(synonyms, season.HasValue);
+
+                    foreach (var title in titles)
                     {
                         var releaseTitle = groupName is "Movie" or "Live Action Movie" ?
                             $"{releaseGroup}{title} {year} {infoString}" :
@@ -665,7 +668,7 @@ namespace NzbDrone.Core.Indexers.Definitions
                 .ToArray();
         }
 
-        private static int? ParseSeasonFromTitles(IReadOnlyCollection<string> titles)
+        private static int? ParseSeasonFromTitles(IReadOnlySet<string> titles)
         {
             var advancedSeasonRegex = new Regex(@"\b(?:(?<season>\d+)(?:st|nd|rd|th) Season|Season (?<season>\d+))\b", RegexOptions.Compiled | RegexOptions.IgnoreCase);
             var seasonCharactersRegex = new Regex(@"(I{2,})$", RegexOptions.Compiled);
@@ -693,6 +696,25 @@ namespace NzbDrone.Core.Indexers.Definitions
             }
 
             return null;
+        }
+
+        private static ReadOnlySet<string> ImproveTitles(IReadOnlySet<string> titles, bool removeSeason = false)
+        {
+            var advancedSeasonRegex = new Regex(@"\b(?:(?<season>\d+)(?:st|nd|rd|th) Season|Season (?<season>\d+))$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+            var newTitles = new HashSet<string>(titles, StringComparer.OrdinalIgnoreCase);
+
+            foreach (var title in titles)
+            {
+                newTitles.Add(advancedSeasonRegex.Replace(title, "S${season}", 1).Trim());
+
+                if (removeSeason)
+                {
+                    newTitles.Add(advancedSeasonRegex.Replace(title, string.Empty, 1).Trim());
+                }
+            }
+
+            return newTitles.AsReadOnly();
         }
 
         public Action<IDictionary<string, string>, DateTime?> CookiesUpdater { get; set; }
