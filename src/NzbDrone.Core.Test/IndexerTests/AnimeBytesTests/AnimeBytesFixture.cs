@@ -45,7 +45,7 @@ namespace NzbDrone.Core.Test.IndexerTests.AnimeBytesTests
 
             var releases = (await Subject.Fetch(new BasicSearchCriteria { SearchTerm = "test", Categories = new[] { 2000, 5000 } })).Releases;
 
-            releases.Should().HaveCount(39);
+            releases.Should().HaveCount(48);
             releases.First().Should().BeOfType<TorrentInfo>();
 
             var firstTorrentInfo = releases.ElementAt(3) as TorrentInfo;
@@ -66,7 +66,7 @@ namespace NzbDrone.Core.Test.IndexerTests.AnimeBytesTests
             firstTorrentInfo.Files.Should().Be(1);
             firstTorrentInfo.MinimumSeedTime.Should().Be(259200);
 
-            var secondTorrentInfo = releases.ElementAt(20) as TorrentInfo;
+            var secondTorrentInfo = releases.ElementAt(26) as TorrentInfo;
 
             secondTorrentInfo.Title.Should().Be("[GHOST] BLEACH S03 [Blu-ray][MKV][h265 10-bit][1080p][AC3 2.0][Dual Audio][Softsubs (GHOST)]");
             secondTorrentInfo.DownloadProtocol.Should().Be(DownloadProtocol.Torrent);
@@ -84,7 +84,7 @@ namespace NzbDrone.Core.Test.IndexerTests.AnimeBytesTests
             secondTorrentInfo.Files.Should().Be(22);
             secondTorrentInfo.MinimumSeedTime.Should().Be(655200);
 
-            var thirdTorrentInfo = releases.ElementAt(23) as TorrentInfo;
+            var thirdTorrentInfo = releases.ElementAt(29) as TorrentInfo;
 
             thirdTorrentInfo.Title.Should().Be("[Polarwindz] Cowboy Bebop: Tengoku no Tobira 2001 [Blu-ray][MKV][h265 10-bit][1080p][Opus 5.1][Softsubs (Polarwindz)]");
             thirdTorrentInfo.DownloadProtocol.Should().Be(DownloadProtocol.Torrent);
@@ -120,7 +120,7 @@ namespace NzbDrone.Core.Test.IndexerTests.AnimeBytesTests
             fourthTorrentInfo.Files.Should().Be(1);
             fourthTorrentInfo.MinimumSeedTime.Should().Be(259200);
 
-            var fifthTorrentInfo = releases.ElementAt(28) as TorrentInfo;
+            var fifthTorrentInfo = releases.ElementAt(34) as TorrentInfo;
 
             fifthTorrentInfo.Title.Should().Be("[-ZR-] Dr. STONE: STONE WARS 2021 S02 [Web][MKV][h264][1080p][AAC 2.0][Dual Audio][Softsubs (-ZR-)]");
             fifthTorrentInfo.DownloadProtocol.Should().Be(DownloadProtocol.Torrent);
@@ -138,7 +138,7 @@ namespace NzbDrone.Core.Test.IndexerTests.AnimeBytesTests
             fifthTorrentInfo.Files.Should().Be(11);
             fifthTorrentInfo.MinimumSeedTime.Should().Be(529200);
 
-            var sixthTorrentInfo = releases.ElementAt(37) as TorrentInfo;
+            var sixthTorrentInfo = releases.ElementAt(46) as TorrentInfo;
 
             sixthTorrentInfo.Title.Should().Be("[HorribleSubs] Dr. STONE S01 [Web][MKV][h264][720p][AAC 2.0][Softsubs (HorribleSubs)]");
             sixthTorrentInfo.DownloadProtocol.Should().Be(DownloadProtocol.Torrent);
