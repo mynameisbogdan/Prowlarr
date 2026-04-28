@@ -150,10 +150,9 @@ namespace NzbDrone.Integration.Test
 
             var cts = new CancellationTokenSource();
 
-            _signalrConnection.Closed += e =>
+            _signalrConnection.Closed += async _ =>
             {
-                cts.Cancel();
-                return Task.CompletedTask;
+                await cts.CancelAsync();
             };
 
             _signalrConnection.On<SignalRMessage>("receiveMessage", (message) =>
@@ -170,7 +169,7 @@ namespace NzbDrone.Integration.Test
                 {
                     Console.WriteLine("Connecting to signalR");
 
-                    await _signalrConnection.StartAsync();
+                    await _signalrConnection.StartAsync(cts.Token);
                     connected = true;
                     break;
                 }
@@ -183,7 +182,7 @@ namespace NzbDrone.Integration.Test
                 }
 
                 retryCount++;
-                Thread.Sleep(200);
+                await Task.Delay(200, cts.Token);
             }
         }
 
