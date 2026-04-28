@@ -130,7 +130,9 @@ public class HappyEyeballs<TSocket>
                 await delayCts.CancelAsync().ConfigureAwait(false);
                 await timeoutTask.ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
 
+#pragma warning disable CA1849
                 completedTask = whenAnyDone.Result;
+#pragma warning restore CA1849
             }
             else
             {
@@ -164,7 +166,9 @@ public class HappyEyeballs<TSocket>
         {
             if (task.IsCompletedSuccessfully)
             {
+#pragma warning disable CA1849
                 task.Result.Dispose();
+#pragma warning restore CA1849
             }
         }
 
@@ -175,6 +179,8 @@ public class HappyEyeballs<TSocket>
             throw new AggregateException(innerExceptions);
         }
 
+#pragma warning disable CA1849
         return successTask.Result;
+#pragma warning restore CA1849
     }
 }
