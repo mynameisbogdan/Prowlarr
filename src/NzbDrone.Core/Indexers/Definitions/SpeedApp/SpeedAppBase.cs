@@ -1,17 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Globalization;
 using System.Linq;
 using System.Net;
-using System.Net.Mime;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using FluentValidation;
-using Newtonsoft.Json;
 using NLog;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Common.Http;
+using NzbDrone.Common.Serializer;
 using NzbDrone.Core.Annotations;
 using NzbDrone.Core.Configuration;
 using NzbDrone.Core.Indexers.Exceptions;
@@ -70,6 +71,7 @@ namespace NzbDrone.Core.Indexers.Definitions
                     AllowAutoRedirect = true
                 }
                 .Post()
+                .Accept(HttpAccept.Json)
                 .Build();
 
             var data = new SpeedAppAuthenticationRequest
@@ -78,9 +80,8 @@ namespace NzbDrone.Core.Indexers.Definitions
                 Password = Settings.Password
             };
 
-            request.SetContent(JsonConvert.SerializeObject(data));
-
-            request.Headers.ContentType = MediaTypeNames.Application.Json;
+            request.Headers.ContentType = "application/json";
+            request.SetContent(STJson.ToJson(data));
 
             var response = await ExecuteAuth(request);
 
@@ -91,7 +92,7 @@ namespace NzbDrone.Core.Indexers.Definitions
                 throw new HttpException(response);
             }
 
-            var parsedResponse = JsonConvert.DeserializeObject<SpeedAppAuthenticationResponse>(response.Content);
+            var parsedResponse = STJson.Deserialize<SpeedAppAuthenticationResponse>(response.Content);
 
             Settings.ApiKey = parsedResponse.Token;
 
@@ -183,7 +184,7 @@ namespace NzbDrone.Core.Indexers.Definitions
         {
             var parameters = new NameValueCollection
             {
-                { "itemsPerPage", Math.Min(_pageSize, searchCriteria.Limit.GetValueOrDefault(_pageSize)).ToString() },
+                { "itemsPerPage", Math.Min(_pageSize, searchCriteria.Limit.GetValueOrDefault(_pageSize)).ToString(CultureInfo.InvariantCulture) },
                 { "sort", "torrent.createdAt" },
                 { "direction", "desc" }
             };
@@ -191,7 +192,7 @@ namespace NzbDrone.Core.Indexers.Definitions
             if (searchCriteria.Limit is > 0 && searchCriteria.Offset is > 0)
             {
                 var page = (int)(searchCriteria.Offset / searchCriteria.Limit) + 1;
-                parameters.Set("page", page.ToString());
+                parameters.Set("page", page.ToString(CultureInfo.InvariantCulture));
             }
 
             if (imdbId.IsNotNullOrWhiteSpace())
@@ -203,12 +204,12 @@ namespace NzbDrone.Core.Indexers.Definitions
                 parameters.Set("search", term);
             }
 
-            if (season != null)
+            if (season.HasValue)
             {
-                parameters.Set("season", season.Value.ToString());
+                parameters.Set("season", season.Value.ToString(CultureInfo.InvariantCulture));
             }
 
-            if (episode != null)
+            if (episode.IsNotNullOrWhiteSpace())
             {
                 parameters.Set("episode", episode);
             }
@@ -258,29 +259,48 @@ namespace NzbDrone.Core.Indexers.Definitions
                 throw new IndexerException(indexerResponse, $"Unexpected response header {indexerResponse.HttpResponse.Headers.ContentType} from indexer request, expected {HttpAccept.Json.Value}");
             }
 
-            var jsonResponse = new HttpResponse<List<SpeedAppTorrent>>(indexerResponse.HttpResponse);
+            var jsonResponse = STJson.Deserialize<List<SpeedAppTorrent>>(indexerResponse.Content);
 
-            return jsonResponse.Resource.Select(torrent => new TorrentInfo
+            var releases = new List<ReleaseInfo>();
+
+            foreach (var torrent in jsonResponse)
             {
-                Guid = torrent.Url,
-                Title = CleanTitle(torrent.Name),
-                Description = torrent.ShortDescription,
-                Size = torrent.Size,
-                ImdbId = ParseUtil.GetImdbId(torrent.ImdbId).GetValueOrDefault(),
-                DownloadUrl = $"{_settings.BaseUrl}api/torrent/{torrent.Id}/download",
-                PosterUrl = torrent.Poster,
-                InfoUrl = torrent.Url,
-                Grabs = torrent.TimesCompleted,
-                PublishDate = torrent.CreatedAt,
-                Categories = _categories.MapTrackerCatToNewznab(torrent.Category.Id.ToString()),
-                InfoHash = null,
-                Seeders = torrent.Seeders,
-                Peers = torrent.Leechers + torrent.Seeders,
-                MinimumRatio = 1,
-                MinimumSeedTime = _minimumSeedTime,
-                DownloadVolumeFactor = torrent.DownloadVolumeFactor,
-                UploadVolumeFactor = torrent.UploadVolumeFactor,
-            }).ToArray();
+                releases.Add(new TorrentInfo
+                {
+                    Guid = torrent.Url,
+                    Title = CleanTitle(torrent.Name),
+                    Description = torrent.ShortDescription,
+                    Size = torrent.Size,
+                    ImdbId = ParseUtil.GetImdbId(torrent.ImdbId).GetValueOrDefault(),
+                    DownloadUrl = $"{_settings.BaseUrl}api/torrent/{torrent.Id}/download",
+                    PosterUrl = torrent.Poster,
+                    InfoUrl = torrent.Url,
+                    Grabs = torrent.TimesCompleted,
+                    PublishDate = torrent.CreatedAt,
+                    Categories = _categories.MapTrackerCatToNewznab(torrent.Category.Id.ToString(CultureInfo.InvariantCulture)),
+                    IndexerFlags = GetIndexerFlags(torrent),
+                    Seeders = torrent.Seeders,
+                    Peers = torrent.Leechers + torrent.Seeders,
+                    MinimumRatio = 1,
+                    MinimumSeedTime = _minimumSeedTime,
+                    DownloadVolumeFactor = torrent.DownloadVolumeFactor,
+                    UploadVolumeFactor = torrent.UploadVolumeFactor,
+                });
+            }
+
+            return releases.ToArray();
+        }
+
+        private static HashSet<IndexerFlag> GetIndexerFlags(SpeedAppTorrent item)
+        {
+            var flags = new HashSet<IndexerFlag>();
+
+            if (item.IsInternal == true)
+            {
+                flags.Add(IndexerFlag.Internal);
+            }
+
+            return flags;
         }
 
         private static string CleanTitle(string title)
@@ -327,175 +347,97 @@ namespace NzbDrone.Core.Indexers.Definitions
 
     public class SpeedAppCategory
     {
-        [JsonProperty("id")]
-        public int Id { get; set; }
+        [JsonPropertyName("id")]
+        public int Id { get; init; }
 
-        [JsonProperty("name")]
-        public string Name { get; set; }
-    }
-
-    public class SpeedAppCountry
-    {
-        [JsonProperty("id")]
-        public int Id { get; set; }
-
-        [JsonProperty("name")]
-        public string Name { get; set; }
-
-        [JsonProperty("flag_image")]
-        public string FlagImage { get; set; }
-    }
-
-    public class SpeedAppUploadedBy
-    {
-        [JsonProperty("id")]
-        public int Id { get; set; }
-
-        [JsonProperty("username")]
-        public string Username { get; set; }
-
-        [JsonProperty("email")]
-        public string Email { get; set; }
-
-        [JsonProperty("created_at")]
-        public DateTime CreatedAt { get; set; }
-
-        [JsonProperty("class")]
-        public int Class { get; set; }
-
-        [JsonProperty("avatar")]
-        public string Avatar { get; set; }
-
-        [JsonProperty("uploaded")]
-        public int Uploaded { get; set; }
-
-        [JsonProperty("downloaded")]
-        public int Downloaded { get; set; }
-
-        [JsonProperty("title")]
-        public string Title { get; set; }
-
-        [JsonProperty("country")]
-        public SpeedAppCountry Country { get; set; }
-
-        [JsonProperty("passkey")]
-        public string Passkey { get; set; }
-
-        [JsonProperty("invites")]
-        public int Invites { get; set; }
-
-        [JsonProperty("timezone")]
-        public string Timezone { get; set; }
-
-        [JsonProperty("hit_and_run_count")]
-        public int HitAndRunCount { get; set; }
-
-        [JsonProperty("snatch_count")]
-        public int SnatchCount { get; set; }
-
-        [JsonProperty("need_seed")]
-        public int NeedSeed { get; set; }
-
-        [JsonProperty("average_seed_time")]
-        public int AverageSeedTime { get; set; }
-
-        [JsonProperty("free_leech_tokens")]
-        public int FreeLeechTokens { get; set; }
-
-        [JsonProperty("double_upload_tokens")]
-        public int DoubleUploadTokens { get; set; }
+        [JsonPropertyName("name")]
+        public string Name { get; init; }
     }
 
     public class SpeedAppTag
     {
-        [JsonProperty("translated_name")]
-        public string TranslatedName { get; set; }
+        [JsonPropertyName("translated_name")]
+        public string TranslatedName { get; init; }
 
-        [JsonProperty("id")]
-        public int Id { get; set; }
+        [JsonPropertyName("id")]
+        public int Id { get; init; }
 
-        [JsonProperty("name")]
-        public string Name { get; set; }
+        [JsonPropertyName("name")]
+        public string Name { get; init; }
 
-        [JsonProperty("match_list")]
-        public List<string> MatchList { get; set; }
+        [JsonPropertyName("match_list")]
+        public List<string> MatchList { get; init; }
 
-        [JsonProperty("created_at")]
-        public DateTime CreatedAt { get; set; }
+        [JsonPropertyName("created_at")]
+        public DateTime CreatedAt { get; init; }
     }
 
     public class SpeedAppTorrent
     {
-        [JsonProperty("download_volume_factor")]
-        public float DownloadVolumeFactor { get; set; }
+        [JsonPropertyName("download_volume_factor")]
+        public float DownloadVolumeFactor { get; init; }
 
-        [JsonProperty("upload_volume_factor")]
-        public float UploadVolumeFactor { get; set; }
+        [JsonPropertyName("upload_volume_factor")]
+        public float UploadVolumeFactor { get; init; }
 
-        [JsonProperty("url")]
-        public string Url { get; set; }
+        [JsonPropertyName("url")]
+        public string Url { get; init; }
 
-        [JsonProperty("id")]
-        public int Id { get; set; }
+        [JsonPropertyName("id")]
+        public int Id { get; init; }
 
-        [JsonProperty("name")]
-        public string Name { get; set; }
+        [JsonPropertyName("name")]
+        public string Name { get; init; }
 
-        [JsonProperty("description")]
-        public string Description { get; set; }
+        [JsonPropertyName("description")]
+        public string Description { get; init; }
 
-        [JsonProperty("category")]
-        public SpeedAppCategory Category { get; set; }
+        [JsonPropertyName("category")]
+        public SpeedAppCategory Category { get; init; }
 
-        [JsonProperty("size")]
-        public long Size { get; set; }
+        [JsonPropertyName("size")]
+        public long Size { get; init; }
 
-        [JsonProperty("created_at")]
-        public DateTime CreatedAt { get; set; }
+        [JsonPropertyName("created_at")]
+        public DateTime CreatedAt { get; init; }
 
-        [JsonProperty("times_completed")]
-        public int TimesCompleted { get; set; }
+        [JsonPropertyName("times_completed")]
+        public int TimesCompleted { get; init; }
 
-        [JsonProperty("leechers")]
-        public int Leechers { get; set; }
+        [JsonPropertyName("leechers")]
+        public int Leechers { get; init; }
 
-        [JsonProperty("seeders")]
-        public int Seeders { get; set; }
+        [JsonPropertyName("seeders")]
+        public int Seeders { get; init; }
 
-        [JsonProperty("uploaded_by")]
-        public SpeedAppUploadedBy UploadedBy { get; set; }
+        [JsonPropertyName("short_description")]
+        public string ShortDescription { get; init; }
 
-        [JsonProperty("short_description")]
-        public string ShortDescription { get; set; }
+        [JsonPropertyName("poster")]
+        public string Poster { get; init; }
 
-        [JsonProperty("poster")]
-        public string Poster { get; set; }
+        [JsonPropertyName("tags")]
+        public IReadOnlyCollection<SpeedAppTag> Tags { get; init; }
 
-        [JsonProperty("season")]
-        public int Season { get; set; }
+        [JsonPropertyName("imdb_id")]
+        public string ImdbId { get; init; }
 
-        [JsonProperty("episode")]
-        public int Episode { get; set; }
-
-        [JsonProperty("tags")]
-        public List<SpeedAppTag> Tags { get; set; }
-
-        [JsonProperty("imdb_id")]
-        public string ImdbId { get; set; }
+        [JsonPropertyName("is_internal")]
+        public bool? IsInternal { get; init; }
     }
 
     public class SpeedAppAuthenticationRequest
     {
-        [JsonProperty("username")]
-        public string Email { get; set; }
+        [JsonPropertyName("username")]
+        public string Email { get; init; }
 
-        [JsonProperty("password")]
-        public string Password { get; set; }
+        [JsonPropertyName("password")]
+        public string Password { get; init; }
     }
 
     public class SpeedAppAuthenticationResponse
     {
-        [JsonProperty("token")]
-        public string Token { get; set; }
+        [JsonPropertyName("token")]
+        public string Token { get; init; }
     }
 }
