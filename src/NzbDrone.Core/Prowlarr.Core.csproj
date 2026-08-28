@@ -3,7 +3,7 @@
     <TargetFrameworks>net10.0</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="AngleSharp.Xml" Version="1.1.0" />
+    <PackageReference Include="AngleSharp.Xml" Version="1.2.0" />
     <PackageReference Include="Dapper" Version="2.1.79" />
     <PackageReference Include="Diacritical.Net" Version="1.0.5" />
     <PackageReference Include="MailKit" Version="4.17.0" />
@@ -21,7 +21,7 @@
     <PackageReference Include="NLog" Version="5.5.1" />
     <PackageReference Include="MonoTorrent" Version="3.0.2" />
     <PackageReference Include="YamlDotNet" Version="18.1.0" />
-    <PackageReference Include="AngleSharp" Version="1.7.1" />
+    <PackageReference Include="AngleSharp" Version="1.7.2" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\NzbDrone.Common\Prowlarr.Common.csproj" />
