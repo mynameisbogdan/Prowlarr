@@ -92,9 +92,12 @@ namespace NzbDrone.Common.Serializer
             }
         }
 
-        public static string ToJson(object obj)
+        public static string ToJson(object obj, bool writeIndented = true)
         {
-            return JsonSerializer.Serialize(obj, SerializerSettings);
+            var options = GetSerializerSettings();
+            options.WriteIndented = writeIndented;
+
+            return JsonSerializer.Serialize(obj, options);
         }
 
         public static void Serialize<TModel>(TModel model, Stream outputStream, JsonSerializerOptions options = null)

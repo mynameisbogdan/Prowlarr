@@ -1,9 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using FluentAssertions;
-using Newtonsoft.Json;
 using NUnit.Framework;
-using NzbDrone.Common.Http;
+using NzbDrone.Common.Serializer;
 using NzbDrone.Core.Indexers;
 using NzbDrone.Core.Indexers.Definitions.HDBits;
 using NzbDrone.Core.IndexerSearch.Definitions;
@@ -49,13 +48,13 @@ namespace NzbDrone.Core.Test.IndexerTests.HDBitsTests
 
             _movieSearchCriteria = new MovieSearchCriteria
             {
-                Categories = new[] { 2000, 2010 },
+                Categories = [2000, 2010],
                 ImdbId = "0076759"
             };
 
             _tvSearchSeasonEpisodeCriteria = new TvSearchCriteria
             {
-                Categories = new[] { 5000, 5010 },
+                Categories = [5000, 5010],
                 TvdbId = 392256,
                 Season = 1,
                 Episode = "3"
@@ -63,7 +62,7 @@ namespace NzbDrone.Core.Test.IndexerTests.HDBitsTests
 
             _tvSearchDailyEpisodeCriteria = new TvSearchCriteria
             {
-                Categories = new[] { 5000, 5010 },
+                Categories = [5000, 5010],
                 TvdbId = 289574,
                 Season = 2023,
                 Episode = "01/03"
@@ -80,10 +79,7 @@ namespace NzbDrone.Core.Test.IndexerTests.HDBitsTests
 
             var page = results.GetAllTiers().First().First();
 
-            var encoding = HttpHeader.GetEncodingFromContentType(page.HttpRequest.Headers.ContentType);
-
-            var body = encoding.GetString(page.HttpRequest.ContentData);
-            var query = JsonConvert.DeserializeObject<TorrentQuery>(body);
+            var query = STJson.Deserialize<TorrentQuery>(page.HttpRequest.ContentData);
 
             query.Category.Should().HaveCount(1);
             query.ImdbInfo.Id.Should().Be(imdbQuery);
@@ -99,16 +95,13 @@ namespace NzbDrone.Core.Test.IndexerTests.HDBitsTests
 
             var page = results.GetAllTiers().First().First();
 
-            var encoding = HttpHeader.GetEncodingFromContentType(page.HttpRequest.Headers.ContentType);
-
-            var body = encoding.GetString(page.HttpRequest.ContentData);
-            var query = JsonConvert.DeserializeObject<TorrentQuery>(body);
+            var query = STJson.Deserialize<TorrentQuery>(page.HttpRequest.ContentData);
 
             query.Category.Should().HaveCount(3);
             query.TvdbInfo.Id.Should().Be(tvdbQuery);
             query.Search.Should().BeNullOrWhiteSpace();
             query.TvdbInfo.Season.Should().Be(1);
-            query.TvdbInfo.Episode.Should().Be("3");
+            query.TvdbInfo.Episode.Should().Be(3);
         }
 
         [Test]
@@ -121,10 +114,7 @@ namespace NzbDrone.Core.Test.IndexerTests.HDBitsTests
 
             var page = results.GetAllTiers().First().First();
 
-            var encoding = HttpHeader.GetEncodingFromContentType(page.HttpRequest.Headers.ContentType);
-
-            var body = encoding.GetString(page.HttpRequest.ContentData);
-            var query = JsonConvert.DeserializeObject<TorrentQuery>(body);
+            var query = STJson.Deserialize<TorrentQuery>(page.HttpRequest.ContentData);
 
             query.Category.Should().HaveCount(3);
             query.TvdbInfo.Id.Should().Be(tvdbQuery);
