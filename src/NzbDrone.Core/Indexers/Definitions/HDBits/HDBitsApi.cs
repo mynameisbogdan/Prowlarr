@@ -1,34 +1,29 @@
 using System;
 using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace NzbDrone.Core.Indexers.Definitions.HDBits
 {
     public class TorrentQuery
     {
-        [JsonProperty(Required = Required.Always)]
         public string Username { get; set; }
-
-        [JsonProperty(Required = Required.Always)]
         public string Passkey { get; set; }
-
-        public string Hash { get; set; }
         public string Search { get; set; }
         public IEnumerable<int> Category { get; set; }
         public IEnumerable<int> Codec { get; set; }
         public IEnumerable<int> Medium { get; set; }
         public IEnumerable<int> Origin { get; set; }
 
-        [JsonProperty(PropertyName = "imdb")]
+        [JsonPropertyName("imdb")]
         public ImdbInfo ImdbInfo { get; set; }
 
-        [JsonProperty(PropertyName = "tvdb")]
+        [JsonPropertyName("tvdb")]
         public TvdbInfo TvdbInfo { get; set; }
 
-        [JsonProperty(PropertyName = "file_in_torrent")]
+        [JsonPropertyName("file_in_torrent")]
         public string FileInTorrent { get; set; }
 
-        [JsonProperty(PropertyName = "snatched_only")]
+        [JsonPropertyName("snatched_only")]
         public bool? SnatchedOnly { get; set; }
 
         public int? Limit { get; set; }
@@ -37,7 +32,7 @@ namespace NzbDrone.Core.Indexers.Definitions.HDBits
 
     public class HDBitsResponse
     {
-        [JsonProperty(Required = Required.Always)]
+        [JsonRequired]
         public StatusCode Status { get; set; }
         public string Message { get; set; }
         public object Data { get; set; }
@@ -45,63 +40,57 @@ namespace NzbDrone.Core.Indexers.Definitions.HDBits
 
     public class TorrentQueryResponse
     {
-        public string Id { get; set; }
+        public long Id { get; set; }
+
         public string Hash { get; set; }
         public int Leechers { get; set; }
         public int Seeders { get; set; }
         public string Name { get; set; }
 
-        [JsonProperty(PropertyName = "times_completed")]
-
+        [JsonPropertyName("times_completed")]
         public uint TimesCompleted { get; set; }
 
         public long Size { get; set; }
-
-        [JsonProperty(PropertyName = "utadded")]
-        public long UtAdded { get; set; }
-
         public DateTime Added { get; set; }
 
-        public uint Comments { get; set; }
-
-        [JsonProperty(PropertyName = "numfiles")]
+        [JsonPropertyName("numfiles")]
         public uint NumFiles { get; set; }
 
-        [JsonProperty(PropertyName = "filename")]
+        [JsonPropertyName("filename")]
         public string FileName { get; set; }
 
-        [JsonProperty(PropertyName = "freeleech")]
+        [JsonPropertyName("freeleech")]
         public string FreeLeech { get; set; }
 
-        [JsonProperty(PropertyName = "type_category")]
+        [JsonPropertyName("type_category")]
         public int TypeCategory { get; set; }
 
-        [JsonProperty(PropertyName = "type_codec")]
+        [JsonPropertyName("type_codec")]
         public int TypeCodec { get; set; }
 
-        [JsonProperty(PropertyName = "type_medium")]
+        [JsonPropertyName("type_medium")]
         public int TypeMedium { get; set; }
 
-        [JsonProperty(PropertyName = "type_origin")]
+        [JsonPropertyName("type_origin")]
         public int TypeOrigin { get; set; }
 
-        [JsonProperty(PropertyName = "type_exclusive")]
+        [JsonPropertyName("type_exclusive")]
         public int TypeExclusive { get; set; }
 
-        [JsonProperty(PropertyName = "imdb")]
+        [JsonPropertyName("imdb")]
         public ImdbInfo ImdbInfo { get; set; }
 
-        [JsonProperty(PropertyName = "tvdb")]
+        [JsonPropertyName("tvdb")]
         public TvdbInfo TvdbInfo { get; set; }
     }
 
     public class ImdbInfo
     {
-        public int Id { get; set; }
+        public int? Id { get; set; }
         public string EnglishTitle { get; set; }
         public string OriginalTitle { get; set; }
         public int? Year { get; set; }
-        public string[] Genres { get; set; }
+        public IReadOnlyCollection<string> Genres { get; set; }
         public float? Rating { get; set; }
     }
 
@@ -109,7 +98,7 @@ namespace NzbDrone.Core.Indexers.Definitions.HDBits
     {
         public int? Id { get; set; }
         public int? Season { get; set; }
-        public string Episode { get; set; }
+        public int? Episode { get; set; }
     }
 
     public enum StatusCode

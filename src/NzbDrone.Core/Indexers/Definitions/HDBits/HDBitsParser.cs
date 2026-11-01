@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 using System.Net;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Common.Http;
+using NzbDrone.Common.Serializer;
 using NzbDrone.Core.Indexers.Exceptions;
 using NzbDrone.Core.Parser.Model;
 
@@ -15,7 +17,7 @@ namespace NzbDrone.Core.Indexers.Definitions.HDBits
         private readonly HDBitsSettings _settings;
         private readonly IndexerCapabilitiesCategories _categories;
 
-        private readonly List<int> _halfLeechMediums = new() { (int)HdBitsMedium.Bluray, (int)HdBitsMedium.Remux, (int)HdBitsMedium.Capture };
+        private readonly List<int> _halfLeechMediums = [(int)HdBitsMedium.Bluray, (int)HdBitsMedium.Remux, (int)HdBitsMedium.Capture];
 
         public HDBitsParser(HDBitsSettings settings, IndexerCapabilitiesCategories categories)
         {
@@ -37,21 +39,21 @@ namespace NzbDrone.Core.Indexers.Definitions.HDBits
                 throw new IndexerException(indexerResponse, "Unexpected response status {0} code from indexer request", indexerHttpResponse.StatusCode);
             }
 
-            var jsonResponse = JsonConvert.DeserializeObject<HDBitsResponse>(indexerResponse.Content);
+            var jsonResponse = STJson.Deserialize<HDBitsResponse>(indexerResponse.HttpResponse.Content);
 
             if (jsonResponse.Status != StatusCode.Success)
             {
                 throw new IndexerException(indexerResponse, "HDBits API request returned status code {0}: {1}", jsonResponse.Status, jsonResponse.Message ?? string.Empty);
             }
 
-            if (jsonResponse.Data is not JArray responseData)
+            if (jsonResponse.Data is not JsonElement { ValueKind: JsonValueKind.Array } responseData)
             {
                 throw new IndexerException(indexerResponse, "Indexer API call response missing result data");
             }
 
             var releaseInfos = new List<ReleaseInfo>();
 
-            var queryResults = responseData.ToObject<TorrentQueryResponse[]>();
+            var queryResults = responseData.Deserialize<TorrentQueryResponse[]>(STJson.GetSerializerSettings());
 
             foreach (var result in queryResults)
             {
@@ -82,7 +84,8 @@ namespace NzbDrone.Core.Indexers.Definitions.HDBits
                     TvdbId = result.TvdbInfo?.Id ?? 0,
                     DownloadVolumeFactor = GetDownloadVolumeFactor(result),
                     UploadVolumeFactor = GetUploadVolumeFactor(result),
-                    IndexerFlags = GetIndexerFlags(result)
+                    IndexerFlags = GetIndexerFlags(result),
+                    Genres = result.ImdbInfo?.Genres?.ToList() ?? [],
                 });
             }
 
@@ -142,21 +145,21 @@ namespace NzbDrone.Core.Indexers.Definitions.HDBits
             return item.TypeCategory == 7 ? 0 : 1;
         }
 
-        private string GetDownloadUrl(string torrentId)
+        private string GetDownloadUrl(long torrentId)
         {
             var url = new HttpUri(_settings.BaseUrl)
                 .CombinePath("/download.php")
-                .AddQueryParam("id", torrentId)
+                .AddQueryParam("id", torrentId.ToString(CultureInfo.InvariantCulture))
                 .AddQueryParam("passkey", _settings.ApiKey);
 
             return url.FullUri;
         }
 
-        private string GetInfoUrl(string torrentId)
+        private string GetInfoUrl(long torrentId)
         {
             var url = new HttpUri(_settings.BaseUrl)
                 .CombinePath("/details.php")
-                .AddQueryParam("id", torrentId);
+                .AddQueryParam("id", torrentId.ToString(CultureInfo.InvariantCulture));
 
             return url.FullUri;
         }
