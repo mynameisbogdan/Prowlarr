@@ -4,7 +4,6 @@ using System.Globalization;
 using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
-using Newtonsoft.Json;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Common.Http;
 using NzbDrone.Common.Serializer;
@@ -71,7 +70,11 @@ namespace NzbDrone.Core.Indexers.Definitions.HDBits
                 else
                 {
                     query.TvdbInfo.Season = searchCriteria.Season;
-                    query.TvdbInfo.Episode = searchCriteria.Episode;
+
+                    if (int.TryParse(searchCriteria.Episode, CultureInfo.InvariantCulture, out var episode) && episode > 0)
+                    {
+                        query.TvdbInfo.Episode = episode;
+                    }
                 }
             }
 
@@ -154,8 +157,8 @@ namespace NzbDrone.Core.Indexers.Definitions.HDBits
                 query.Page = (int)(searchCriteria.Offset / searchCriteria.Limit);
             }
 
-            request.SetContent(query.ToJson());
-            request.ContentSummary = query.ToJson(Formatting.None);
+            request.SetContent(STJson.ToJson(query));
+            request.ContentSummary = STJson.ToJson(query, false);
 
             yield return new IndexerRequest(request);
         }
