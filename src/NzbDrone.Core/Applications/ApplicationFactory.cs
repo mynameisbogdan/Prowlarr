@@ -30,6 +30,13 @@ namespace NzbDrone.Core.Applications
             _logger = logger;
         }
 
+        public override void SetProviderCharacteristics(IApplication provider, ApplicationDefinition definition)
+        {
+            base.SetProviderCharacteristics(provider, definition);
+
+            definition.ApplicationType = provider.ApplicationType;
+        }
+
         public List<IApplication> SyncEnabled(bool filterBlockedClients = true)
         {
             var enabledClients = GetAvailableProviders().Where(n => ((ApplicationDefinition)n.Definition).Enable);

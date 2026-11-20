@@ -18,6 +18,8 @@ namespace NzbDrone.Core.Applications.Whisparr
     {
         public override string Name => "Whisparr";
 
+        public override ApplicationType ApplicationType => ApplicationType.Unofficial;
+
         private readonly IWhisparrV3Proxy _whisparrV3Proxy;
         private readonly ICached<List<WhisparrIndexer>> _schemaCache;
         private readonly IConfigFileProvider _configFileProvider;

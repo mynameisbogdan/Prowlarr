@@ -763,6 +763,7 @@
   "TrustedNetworksHelpText": "Comma separated list of IP addresses or networks in CIDR notation that trusted reverse proxies are on. e.g. 172.17.0.1, 10.0.0.0/8 or fc00::/7. Only add proxies that are properly configured to send the correct headers.",
   "TvSearch": "TV Search",
   "Type": "Type",
+  "TypeOfApplications": "{typeOfApplication} Applications",
   "UI": "UI",
   "UILanguage": "UI Language",
   "UILanguageHelpText": "Language that {appName} will use for UI",

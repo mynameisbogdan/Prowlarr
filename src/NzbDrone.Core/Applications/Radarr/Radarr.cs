@@ -18,6 +18,8 @@ namespace NzbDrone.Core.Applications.Radarr
     {
         public override string Name => "Radarr";
 
+        public override ApplicationType ApplicationType => ApplicationType.Official;
+
         private readonly IRadarrV3Proxy _radarrV3Proxy;
         private readonly ICached<List<RadarrIndexer>> _schemaCache;
         private readonly IConfigFileProvider _configFileProvider;

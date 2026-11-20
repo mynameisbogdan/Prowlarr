@@ -18,6 +18,8 @@ namespace NzbDrone.Core.Applications.Sonarr
     {
         public override string Name => "Sonarr";
 
+        public override ApplicationType ApplicationType => ApplicationType.Official;
+
         private readonly ICached<List<SonarrIndexer>> _schemaCache;
         private readonly ISonarrV3Proxy _sonarrV3Proxy;
         private readonly IConfigFileProvider _configFileProvider;

@@ -6,6 +6,8 @@ namespace NzbDrone.Core.Applications
 {
     public interface IApplication : IProvider
     {
+        ApplicationType ApplicationType { get; }
+
         void AddIndexer(IndexerDefinition indexer);
         void UpdateIndexer(IndexerDefinition indexer, bool forceSync = false);
         void RemoveIndexer(int indexerId);

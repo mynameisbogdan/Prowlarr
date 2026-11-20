@@ -13,6 +13,8 @@ namespace NzbDrone.Core.Applications.Mylar
     {
         public override string Name => "Mylar";
 
+        public override ApplicationType ApplicationType => ApplicationType.Unofficial;
+
         private readonly IMylarV3Proxy _mylarV3Proxy;
         private readonly IConfigFileProvider _configFileProvider;
 

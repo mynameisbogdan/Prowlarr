@@ -18,6 +18,8 @@ namespace NzbDrone.Core.Applications.Readarr
     {
         public override string Name => "Readarr";
 
+        public override ApplicationType ApplicationType => ApplicationType.Official;
+
         private readonly ICached<List<ReadarrIndexer>> _schemaCache;
         private readonly IReadarrV1Proxy _readarrV1Proxy;
         private readonly IConfigFileProvider _configFileProvider;

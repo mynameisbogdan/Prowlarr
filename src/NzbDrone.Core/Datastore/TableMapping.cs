@@ -76,7 +76,8 @@ namespace NzbDrone.Core.Datastore
                   .Ignore(x => x.ImplementationName);
 
             Mapper.Entity<ApplicationDefinition>("Applications").RegisterModel()
-                  .Ignore(x => x.ImplementationName);
+                  .Ignore(x => x.ImplementationName)
+                  .Ignore(x => x.ApplicationType);
 
             Mapper.Entity<History.History>("History").RegisterModel();
 

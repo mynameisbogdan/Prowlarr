@@ -20,6 +20,8 @@ namespace NzbDrone.Core.Applications
 
         public abstract string Name { get; }
 
+        public abstract ApplicationType ApplicationType { get; }
+
         public Type ConfigContract => typeof(TSettings);
 
         public virtual ProviderMessage Message => null;

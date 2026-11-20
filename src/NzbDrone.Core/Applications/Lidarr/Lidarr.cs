@@ -18,6 +18,8 @@ namespace NzbDrone.Core.Applications.Lidarr
     {
         public override string Name => "Lidarr";
 
+        public override ApplicationType ApplicationType => ApplicationType.Official;
+
         private readonly ILidarrV1Proxy _lidarrV1Proxy;
         private readonly ICached<List<LidarrIndexer>> _schemaCache;
         private readonly IConfigFileProvider _configFileProvider;

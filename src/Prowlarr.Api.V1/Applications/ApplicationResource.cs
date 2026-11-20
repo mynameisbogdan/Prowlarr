@@ -7,6 +7,10 @@ namespace Prowlarr.Api.V1.Applications
     {
         public ApplicationSyncLevel SyncLevel { get; set; }
 
+        public ApplicationType ApplicationType { get; set; }
+
+        public int ApplicationOrder { get; set; }
+
         [SwaggerIgnore]
         public bool Enable { get; set; }
 
@@ -25,6 +29,8 @@ namespace Prowlarr.Api.V1.Applications
             var resource = base.ToResource(definition);
 
             resource.SyncLevel = definition.SyncLevel;
+            resource.ApplicationType = definition.ApplicationType;
+            resource.ApplicationOrder = (int)definition.ApplicationType;
             resource.Enable = definition.Enable;
 
             return resource;

@@ -16,11 +16,26 @@ function createMapStateToProps() {
         schema
       } = applications;
 
+      const applicationGroups = [...schema]
+        .sort((a, b) => a.applicationOrder - b.applicationOrder)
+        .reduce(
+          (acc, item) => {
+            if (!acc[item.applicationType]) {
+              acc[item.applicationType] = [];
+            }
+
+            acc[item.applicationType].push(item);
+
+            return acc;
+          },
+          {}
+        );
+
       return {
         isSchemaFetching,
         isSchemaPopulated,
         schemaError,
-        schema
+        applicationGroups
       };
     }
   );

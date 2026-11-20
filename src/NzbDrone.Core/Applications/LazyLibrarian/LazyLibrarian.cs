@@ -13,6 +13,8 @@ namespace NzbDrone.Core.Applications.LazyLibrarian
     {
         public override string Name => "LazyLibrarian";
 
+        public override ApplicationType ApplicationType => ApplicationType.Unofficial;
+
         private readonly ILazyLibrarianV1Proxy _lazyLibrarianV1Proxy;
         private readonly IConfigFileProvider _configFileProvider;
 
