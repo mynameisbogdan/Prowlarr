@@ -12,6 +12,7 @@ namespace NzbDrone.Core.Indexers.Definitions.FileList;
 
 public class FileListParser : IParseIndexerResponse
 {
+    private static readonly TimeZoneInfo TimeZoneInfo = GetTimeZoneInfo();
     private readonly FileListSettings _settings;
     private readonly IndexerCapabilitiesCategories _categories;
 
@@ -67,6 +68,8 @@ public class FileListParser : IParseIndexerResponse
             var downloadVolumeFactor = row.FreeLeech ? 0 : 1;
             var uploadVolumeFactor = row.DoubleUp ? 2 : 1;
 
+            var publishDate = TimeZoneInfo.ConvertTimeToUtc(DateTime.Parse(row.UploadDate, CultureInfo.InvariantCulture, DateTimeStyles.None), TimeZoneInfo);
+
             releaseInfos.Add(new TorrentInfo
             {
                 Guid = $"FileList-{id}",
@@ -77,7 +80,7 @@ public class FileListParser : IParseIndexerResponse
                 InfoUrl = GetInfoUrl(id),
                 Seeders = row.Seeders,
                 Peers = row.Leechers + row.Seeders,
-                PublishDate = DateTime.Parse(row.UploadDate + " +0200", CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal),
+                PublishDate = publishDate,
                 Description = row.SmallDescription,
                 Genres = row.SmallDescription.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList(),
                 ImdbId = imdbId,
@@ -95,6 +98,13 @@ public class FileListParser : IParseIndexerResponse
     }
 
     public Action<IDictionary<string, string>, DateTime?> CookiesUpdater { get; set; }
+
+    private static TimeZoneInfo GetTimeZoneInfo()
+    {
+        return TimeZoneInfo.TryFindSystemTimeZoneById("Europe/Bucharest", out var zoneInfo)
+            ? zoneInfo
+            : TimeZoneInfo.Utc;
+    }
 
     private string GetDownloadUrl(uint torrentId)
     {
