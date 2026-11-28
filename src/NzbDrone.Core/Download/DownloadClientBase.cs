@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentValidation.Results;
 using NLog;
@@ -64,7 +65,7 @@ namespace NzbDrone.Core.Download
             get;
         }
 
-        public abstract Task<string> Download(ReleaseInfo release, bool redirect, IIndexer indexer);
+        public abstract Task<string> Download(ReleaseInfo release, bool redirect, IIndexer indexer, CancellationToken cancellationToken = default);
 
         protected string GetCategoryForRelease(ReleaseInfo release)
         {

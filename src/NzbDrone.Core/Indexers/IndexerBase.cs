@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentValidation.Results;
 using NLog;
@@ -92,12 +93,12 @@ namespace NzbDrone.Core.Indexers
 
         protected TSettings Settings => GetDefaultBaseUrl((TSettings)Definition.Settings);
 
-        public abstract Task<IndexerPageableQueryResult> Fetch(MovieSearchCriteria searchCriteria);
-        public abstract Task<IndexerPageableQueryResult> Fetch(MusicSearchCriteria searchCriteria);
-        public abstract Task<IndexerPageableQueryResult> Fetch(TvSearchCriteria searchCriteria);
-        public abstract Task<IndexerPageableQueryResult> Fetch(BookSearchCriteria searchCriteria);
-        public abstract Task<IndexerPageableQueryResult> Fetch(BasicSearchCriteria searchCriteria);
-        public abstract Task<IndexerDownloadResponse> Download(Uri link);
+        public abstract Task<IndexerPageableQueryResult> Fetch(MovieSearchCriteria searchCriteria, CancellationToken cancellationToken = default);
+        public abstract Task<IndexerPageableQueryResult> Fetch(MusicSearchCriteria searchCriteria, CancellationToken cancellationToken = default);
+        public abstract Task<IndexerPageableQueryResult> Fetch(TvSearchCriteria searchCriteria, CancellationToken cancellationToken = default);
+        public abstract Task<IndexerPageableQueryResult> Fetch(BookSearchCriteria searchCriteria, CancellationToken cancellationToken = default);
+        public abstract Task<IndexerPageableQueryResult> Fetch(BasicSearchCriteria searchCriteria, CancellationToken cancellationToken = default);
+        public abstract Task<IndexerDownloadResponse> Download(Uri link, CancellationToken cancellationToken = default);
 
         public abstract IndexerCapabilities GetCapabilities();
 
@@ -219,7 +220,7 @@ namespace NzbDrone.Core.Indexers
             return new ValidationResult(failures);
         }
 
-        protected abstract Task Test(List<ValidationFailure> failures);
+        protected abstract Task Test(List<ValidationFailure> failures, CancellationToken cancellationToken = default);
 
         public override string ToString()
         {

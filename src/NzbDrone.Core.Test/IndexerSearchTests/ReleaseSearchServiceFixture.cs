@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using FluentAssertions;
 using Moq;
 using NUnit.Framework;
@@ -30,12 +31,12 @@ namespace NzbDrone.Core.Test.IndexerSearchTests
         {
             var result = new List<SearchCriteriaBase>();
 
-            _mockIndexer.Setup(v => v.Fetch(It.IsAny<MovieSearchCriteria>()))
-                .Callback<MovieSearchCriteria>(s => result.Add(s))
+            _mockIndexer.Setup(v => v.Fetch(It.IsAny<MovieSearchCriteria>(), It.IsAny<CancellationToken>()))
+                .Callback<MovieSearchCriteria, CancellationToken>((s, _) => result.Add(s))
                 .ReturnsAsync(new IndexerPageableQueryResult());
 
-            _mockIndexer.Setup(v => v.Fetch(It.IsAny<TvSearchCriteria>()))
-                .Callback<TvSearchCriteria>(s => result.Add(s))
+            _mockIndexer.Setup(v => v.Fetch(It.IsAny<TvSearchCriteria>(), It.IsAny<CancellationToken>()))
+                .Callback<TvSearchCriteria, CancellationToken>((s, _) => result.Add(s))
                 .ReturnsAsync(new IndexerPageableQueryResult());
 
             return result;

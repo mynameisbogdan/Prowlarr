@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentValidation.Results;
 using NLog;
@@ -203,9 +204,9 @@ namespace NzbDrone.Core.Indexers.Definitions.Cardigann
             return request;
         }
 
-        protected override async Task Test(List<ValidationFailure> failures)
+        protected override async Task Test(List<ValidationFailure> failures, CancellationToken cancellationToken = default)
         {
-            await base.Test(failures);
+            await base.Test(failures, cancellationToken);
             if (failures.HasErrors())
             {
                 return;

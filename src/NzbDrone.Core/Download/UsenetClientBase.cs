@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using NLog;
 using NzbDrone.Common.Disk;
@@ -32,7 +33,7 @@ namespace NzbDrone.Core.Download
         protected abstract string AddFromNzbFile(ReleaseInfo release, string filename, byte[] fileContents);
         protected abstract string AddFromLink(ReleaseInfo release);
 
-        public override async Task<string> Download(ReleaseInfo release, bool redirect, IIndexer indexer)
+        public override async Task<string> Download(ReleaseInfo release, bool redirect, IIndexer indexer, CancellationToken cancellationToken = default)
         {
             var url = new Uri(release.DownloadUrl);
 
@@ -43,7 +44,7 @@ namespace NzbDrone.Core.Download
 
             var filename = StringUtil.CleanFileName(release.Title) + ".nzb";
 
-            var downloadResponse = await indexer.Download(url);
+            var downloadResponse = await indexer.Download(url, cancellationToken);
 
             _logger.Info("Adding report [{0}] to the queue.", release.Title);
             return AddFromNzbFile(release, filename, downloadResponse.Data);

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentValidation;
 using Newtonsoft.Json;
@@ -58,7 +59,7 @@ public class MTeamTp : TorrentIndexerBase<MTeamTpSettings>
         return new MTeamTpParser(Settings, Capabilities.Categories, BuildApiUrl(Settings));
     }
 
-    public override async Task<IndexerDownloadResponse> Download(Uri link)
+    public override async Task<IndexerDownloadResponse> Download(Uri link, CancellationToken cancellationToken = default)
     {
         var request = new HttpRequestBuilder(link.ToString())
             .SetHeader("x-api-key", Settings.ApiKey)
@@ -68,7 +69,7 @@ public class MTeamTp : TorrentIndexerBase<MTeamTpSettings>
 
         request.Headers.UserAgent = UserAgent;
 
-        var response = await _httpClient.ExecuteProxiedAsync(request, Definition);
+        var response = await _httpClient.ExecuteProxiedAsync(request, Definition, cancellationToken);
 
         if (!STJson.TryDeserialize<MTeamTpApiDownloadTokenResponse>(response.ResponseData, out var jsonResponse))
         {
@@ -80,7 +81,7 @@ public class MTeamTp : TorrentIndexerBase<MTeamTpSettings>
             throw new ReleaseDownloadException($"Unable to find download link for: {link}");
         }
 
-        return await base.Download(new Uri(jsonResponse.Data));
+        return await base.Download(new Uri(jsonResponse.Data), cancellationToken);
     }
 
     protected override Task<HttpRequest> GetDownloadRequest(Uri link)

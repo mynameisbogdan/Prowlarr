@@ -4,6 +4,7 @@ using System.Collections.Specialized;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using AngleSharp.Dom;
 using AngleSharp.Html.Parser;
@@ -51,7 +52,7 @@ namespace NzbDrone.Core.Indexers.Definitions
             return new RuTrackerParser(Settings, Capabilities.Categories);
         }
 
-        public override async Task<IndexerDownloadResponse> Download(Uri link)
+        public override async Task<IndexerDownloadResponse> Download(Uri link, CancellationToken cancellationToken = default)
         {
             if (Settings.UseMagnetLinks && link.PathAndQuery.Contains("viewtopic.php?t="))
             {
@@ -60,10 +61,10 @@ namespace NzbDrone.Core.Indexers.Definitions
                     .Accept(HttpAccept.Html)
                     .Build();
 
-                var response = await _httpClient.ExecuteProxiedAsync(request, Definition);
+                var response = await _httpClient.ExecuteProxiedAsync(request, Definition, cancellationToken);
 
                 var parser = new HtmlParser();
-                using var dom = parser.ParseDocument(response.Content);
+                using var dom = await parser.ParseDocumentAsync(response.Content, cancellationToken);
                 var magnetLink = dom.QuerySelector("table.attach a.magnet-link[href^=\"magnet:?\"]")?.GetAttribute("href");
 
                 if (magnetLink == null)
@@ -74,7 +75,7 @@ namespace NzbDrone.Core.Indexers.Definitions
                 link = new Uri(magnetLink);
             }
 
-            return await base.Download(link);
+            return await base.Download(link, cancellationToken);
         }
 
         protected override async Task DoLogin()

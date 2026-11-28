@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Microsoft.AspNetCore.Cors;
@@ -56,7 +57,7 @@ namespace NzbDrone.Api.V1.Indexers
 
         [HttpGet("/api/v1/indexer/{id:int}/newznab")]
         [HttpGet("{id:int}/api")]
-        public async Task<IActionResult> GetNewznabResponse(int id, [FromQuery] NewznabRequest request)
+        public async Task<IActionResult> GetNewznabResponse(int id, [FromQuery] NewznabRequest request, CancellationToken cancellationToken = default)
         {
             var requestType = request.t;
             request.source = Request.GetSource();
@@ -177,7 +178,7 @@ namespace NzbDrone.Api.V1.Indexers
                 case "music":
                 case "book":
                 case "movie":
-                    var results = await _releaseSearchService.Search(request, new List<int> { indexerDef.Id }, false);
+                    var results = await _releaseSearchService.Search(request, new List<int> { indexerDef.Id }, false, cancellationToken);
 
                     var blockedIndexerStatusPost = GetBlockedIndexerStatus(indexer);
 
@@ -208,7 +209,7 @@ namespace NzbDrone.Api.V1.Indexers
 
         [HttpGet("/api/v1/indexer/{id:int}/download")]
         [HttpGet("{id:int}/download")]
-        public async Task<object> GetDownload(int id, string link, string file)
+        public async Task<object> GetDownload(int id, string link, string file, CancellationToken cancellationToken = default)
         {
             var indexerDef = _indexerFactory.Get(id);
 
@@ -273,7 +274,7 @@ namespace NzbDrone.Api.V1.Indexers
 
             try
             {
-                downloadBytes = await _downloadService.DownloadReport(unprotectedLink, id, source, host, file);
+                downloadBytes = await _downloadService.DownloadReport(unprotectedLink, id, source, host, file, cancellationToken);
             }
             catch (ReleaseUnavailableException ex)
             {

@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Threading.Tasks;
 using NzbDrone.Core.Indexers;
 using NzbDrone.Core.Parser.Model;
@@ -9,6 +10,6 @@ namespace NzbDrone.Core.Download
     {
         bool SupportsCategories { get; }
         DownloadProtocol Protocol { get; }
-        Task<string> Download(ReleaseInfo release, bool redirect, IIndexer indexer);
+        Task<string> Download(ReleaseInfo release, bool redirect, IIndexer indexer, CancellationToken cancellationToken = default);
     }
 }

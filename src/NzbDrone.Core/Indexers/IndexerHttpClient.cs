@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using NLog;
 using NzbDrone.Common.Cache;
@@ -16,7 +17,7 @@ namespace NzbDrone.Core.Indexers
 {
     public interface IIndexerHttpClient : IHttpClient
     {
-        Task<HttpResponse> ExecuteProxiedAsync(HttpRequest request, ProviderDefinition definition);
+        Task<HttpResponse> ExecuteProxiedAsync(HttpRequest request, ProviderDefinition definition, CancellationToken cancellationToken = default);
         HttpResponse ExecuteProxied(HttpRequest request, ProviderDefinition definition);
     }
 
@@ -34,13 +35,13 @@ namespace NzbDrone.Core.Indexers
             _indexerProxyFactory = indexerProxyFactory;
         }
 
-        public async Task<HttpResponse> ExecuteProxiedAsync(HttpRequest request, ProviderDefinition definition)
+        public async Task<HttpResponse> ExecuteProxiedAsync(HttpRequest request, ProviderDefinition definition, CancellationToken cancellationToken = default)
         {
             var selectedProxies = GetProxies(definition);
 
             request = PreRequest(request, selectedProxies);
 
-            return PostResponse(await ExecuteAsync(request), selectedProxies);
+            return PostResponse(await ExecuteAsync(request, cancellationToken), selectedProxies);
         }
 
         public HttpResponse ExecuteProxied(HttpRequest request, ProviderDefinition definition)

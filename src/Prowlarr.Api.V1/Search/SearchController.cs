@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
@@ -55,7 +56,7 @@ namespace Prowlarr.Api.V1.Search
         [HttpPost]
         [Consumes("application/json")]
         [Produces("application/json")]
-        public async Task<ActionResult<ReleaseResource>> GrabRelease([FromBody] ReleaseResource release)
+        public async Task<ActionResult<ReleaseResource>> GrabRelease([FromBody] ReleaseResource release, CancellationToken cancellationToken = default)
         {
             ValidateResource(release);
 
@@ -74,7 +75,7 @@ namespace Prowlarr.Api.V1.Search
 
             try
             {
-                await _downloadService.SendReportToClient(releaseInfo, source, host, indexerDef.Redirect, release.DownloadClientId);
+                await _downloadService.SendReportToClient(releaseInfo, source, host, indexerDef.Redirect, release.DownloadClientId, cancellationToken);
             }
             catch (DownloadClientRejectedReleaseException ex)
             {
@@ -95,7 +96,7 @@ namespace Prowlarr.Api.V1.Search
         [HttpPost("bulk")]
         [Consumes("application/json")]
         [Produces("application/json")]
-        public async Task<ActionResult<ReleaseResource>> GrabReleases([FromBody] List<ReleaseResource> releases)
+        public async Task<ActionResult<ReleaseResource>> GrabReleases([FromBody] List<ReleaseResource> releases, CancellationToken cancellationToken = default)
         {
             releases.ForEach(release => ValidateResource(release));
 
@@ -123,7 +124,7 @@ namespace Prowlarr.Api.V1.Search
 
                     try
                     {
-                        await _downloadService.SendReportToClient(releaseInfo, source, host, indexerDef.Redirect, null);
+                        await _downloadService.SendReportToClient(releaseInfo, source, host, indexerDef.Redirect, null, cancellationToken);
                     }
                     catch (ReleaseDownloadException ex)
                     {
@@ -152,12 +153,12 @@ namespace Prowlarr.Api.V1.Search
 
         [HttpGet]
         [Produces("application/json")]
-        public Task<List<ReleaseResource>> GetAll([FromQuery] SearchResource payload)
+        public Task<List<ReleaseResource>> GetAll([FromQuery] SearchResource payload, CancellationToken cancellationToken = default)
         {
-            return GetSearchReleases(payload);
+            return GetSearchReleases(payload, cancellationToken);
         }
 
-        private async Task<List<ReleaseResource>> GetSearchReleases([FromQuery] SearchResource payload)
+        private async Task<List<ReleaseResource>> GetSearchReleases([FromQuery] SearchResource payload, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -175,7 +176,7 @@ namespace Prowlarr.Api.V1.Search
 
                 request.QueryToParams();
 
-                var result = await _releaseSearchService.Search(request, payload.IndexerIds, true);
+                var result = await _releaseSearchService.Search(request, payload.IndexerIds, true, cancellationToken);
                 var releases = result.Releases;
 
                 return MapReleases(releases, Request.GetServerUrl());

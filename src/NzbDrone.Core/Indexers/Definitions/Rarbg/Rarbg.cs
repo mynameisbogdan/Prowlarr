@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 using NLog;
@@ -55,7 +56,7 @@ namespace NzbDrone.Core.Indexers.Definitions.Rarbg
             return $"{request.HttpRequest.Url.FullUri}.{HashUtil.ComputeSha256Hash(Settings.ToJson())}";
         }
 
-        protected override async Task<IndexerQueryResult> FetchPage(IndexerRequest request, IParseIndexerResponse parser)
+        protected override async Task<IndexerQueryResult> FetchPage(IndexerRequest request, IParseIndexerResponse parser, CancellationToken cancellationToken = default)
         {
             var cacheKey = BuildQueryResultCacheKey(request);
             var queryResult = _queryResultCache.Find(cacheKey);
@@ -69,7 +70,7 @@ namespace NzbDrone.Core.Indexers.Definitions.Rarbg
 
             _queryResultCache.ClearExpired();
 
-            queryResult = await base.FetchPage(request, parser);
+            queryResult = await base.FetchPage(request, parser, cancellationToken);
             _queryResultCache.Set(cacheKey, queryResult, TimeSpan.FromMinutes(10));
 
             return queryResult;
@@ -132,9 +133,9 @@ namespace NzbDrone.Core.Indexers.Definitions.Rarbg
             return caps;
         }
 
-        protected override async Task<IndexerResponse> FetchIndexerResponse(IndexerRequest request)
+        protected override async Task<IndexerResponse> FetchIndexerResponse(IndexerRequest request, CancellationToken cancellationToken = default)
         {
-            var response = await base.FetchIndexerResponse(request);
+            var response = await base.FetchIndexerResponse(request, cancellationToken);
 
             ((RarbgParser)GetParser()).CheckResponseByStatusCode(response);
 
@@ -154,14 +155,14 @@ namespace NzbDrone.Core.Indexers.Definitions.Rarbg
 
                     request.HttpRequest.Url = request.Url.SetQuery(qs.GetQueryString());
 
-                    return await FetchIndexerResponse(request);
+                    return await FetchIndexerResponse(request, cancellationToken);
                 }
 
                 if (jsonResponse.Resource.error_code is 5)
                 {
                     _logger.Debug("Rarbg temp rate limit hit, retrying request");
 
-                    return await FetchIndexerResponse(request);
+                    return await FetchIndexerResponse(request, cancellationToken);
                 }
             }
 

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
@@ -34,6 +35,7 @@ namespace NzbDrone.Core.Test.IndexerTests
 
             var caps = new IndexerCapabilities();
             caps.Categories.AddCategoryMapping(2000, NewznabStandardCategory.Movies, "Movies");
+            caps.Categories.AddCategoryMapping(5000, NewznabStandardCategory.TV, "TV");
 
             Mocker.GetMock<INewznabCapabilitiesProvider>()
                 .Setup(v => v.GetCapabilities(It.IsAny<NewznabSettings>(), It.IsAny<IndexerDefinition>()))
@@ -44,9 +46,9 @@ namespace NzbDrone.Core.Test.IndexerTests
             _requests = new List<HttpRequest>();
 
             Mocker.GetMock<IIndexerHttpClient>()
-                .Setup(o => o.ExecuteProxiedAsync(It.IsAny<HttpRequest>(), It.IsAny<ProviderDefinition>()))
-                .Callback<HttpRequest, ProviderDefinition>((r, _) => _requests.Add(r))
-                .ReturnsAsync((HttpRequest r, ProviderDefinition _) => new HttpResponse(r, new HttpHeader(), new CookieCollection(), feed));
+                .Setup(o => o.ExecuteProxiedAsync(It.IsAny<HttpRequest>(), It.IsAny<ProviderDefinition>(), It.IsAny<CancellationToken>()))
+                .Callback<HttpRequest, ProviderDefinition, CancellationToken>((r, _, _) => _requests.Add(r))
+                .ReturnsAsync((HttpRequest r, ProviderDefinition _, CancellationToken _) => new HttpResponse(r, new HttpHeader(), new CookieCollection(), feed));
         }
 
         private Task FetchAsync()

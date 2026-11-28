@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentValidation;
 using FluentValidation.Results;
@@ -68,13 +69,13 @@ namespace NzbDrone.Core.Indexers.Definitions
             return CookieUtil.CookieHeaderToDictionary($"mam_id={Settings.MamId}");
         }
 
-        protected override async Task Test(List<ValidationFailure> failures)
+        protected override async Task Test(List<ValidationFailure> failures, CancellationToken cancellationToken = default)
         {
             UpdateCookies(null, null);
 
             _logger.Debug("Cookies cleared.");
 
-            await base.Test(failures).ConfigureAwait(false);
+            await base.Test(failures, cancellationToken).ConfigureAwait(false);
         }
 
         private static IndexerCapabilities SetCapabilities()

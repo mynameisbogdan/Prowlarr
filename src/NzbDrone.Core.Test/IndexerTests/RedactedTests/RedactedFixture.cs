@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
@@ -34,8 +35,8 @@ namespace NzbDrone.Core.Test.IndexerTests.RedactedTests
             var recentFeed = ReadAllText(@"Files/Indexers/Redacted/recentfeed.json");
 
             Mocker.GetMock<IIndexerHttpClient>()
-                .Setup(o => o.ExecuteProxiedAsync(It.Is<HttpRequest>(v => v.Method == HttpMethod.Get), Subject.Definition))
-                .ReturnsAsync((HttpRequest r, IndexerDefinition _) => new HttpResponse(r, new HttpHeader { { "Content-Type", "application/json" } }, new CookieCollection(), recentFeed));
+                .Setup(o => o.ExecuteProxiedAsync(It.Is<HttpRequest>(v => v.Method == HttpMethod.Get), Subject.Definition, It.IsAny<CancellationToken>()))
+                .ReturnsAsync((HttpRequest r, IndexerDefinition _, CancellationToken _) => new HttpResponse(r, new HttpHeader { { "Content-Type", "application/json" } }, new CookieCollection(), recentFeed));
 
             var releases = (await Subject.Fetch(new BasicSearchCriteria { Categories = new[] { 3000 } })).Releases;
 

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using NLog;
 using NzbDrone.Common.Extensions;
@@ -83,9 +84,9 @@ public abstract class GazelleBase<TSettings> : TorrentIndexerBase<TSettings>
 
     protected virtual bool CheckForLoginError(HttpResponse response) => true;
 
-    public override async Task<IndexerDownloadResponse> Download(Uri link)
+    public override async Task<IndexerDownloadResponse> Download(Uri link, CancellationToken cancellationToken = default)
     {
-        var downloadResponse = await base.Download(link);
+        var downloadResponse = await base.Download(link, cancellationToken);
 
         var fileData = downloadResponse.Data;
 
@@ -102,7 +103,7 @@ public abstract class GazelleBase<TSettings> : TorrentIndexerBase<TSettings>
                 || html.Contains("You cannot use tokens here"))
             {
                 // Try to download again without usetoken
-                downloadResponse = await base.Download(link.RemoveQueryParam("usetoken"));
+                downloadResponse = await base.Download(link.RemoveQueryParam("usetoken"), cancellationToken);
             }
         }
 

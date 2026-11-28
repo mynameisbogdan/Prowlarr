@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentValidation.Results;
 using NLog;
@@ -40,9 +41,9 @@ namespace NzbDrone.Core.Indexers.Headphones
         {
         }
 
-        protected override async Task Test(List<ValidationFailure> failures)
+        protected override async Task Test(List<ValidationFailure> failures, CancellationToken cancellationToken = default)
         {
-            await base.Test(failures);
+            await base.Test(failures, cancellationToken);
 
             if (failures.Any())
             {
@@ -50,7 +51,7 @@ namespace NzbDrone.Core.Indexers.Headphones
             }
         }
 
-        public override async Task<IndexerDownloadResponse> Download(Uri link)
+        public override async Task<IndexerDownloadResponse> Download(Uri link, CancellationToken cancellationToken = default)
         {
             var requestBuilder = new HttpRequestBuilder(link.AbsoluteUri);
 
@@ -63,7 +64,7 @@ namespace NzbDrone.Core.Indexers.Headphones
 
             try
             {
-                var response = await _httpClient.ExecuteProxiedAsync(request, Definition);
+                var response = await _httpClient.ExecuteProxiedAsync(request, Definition, cancellationToken);
                 downloadBytes = response.ResponseData;
                 elapsedTime = response.ElapsedTime;
             }

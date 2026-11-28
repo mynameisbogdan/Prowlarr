@@ -3,6 +3,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
@@ -46,8 +47,8 @@ namespace NzbDrone.Core.Test.IndexerTests.HDBitsTests
             var responseJson = ReadAllText(fileName);
 
             Mocker.GetMock<IIndexerHttpClient>()
-                .Setup(o => o.ExecuteProxiedAsync(It.Is<HttpRequest>(v => v.Method == HttpMethod.Post), Subject.Definition))
-                .ReturnsAsync((HttpRequest r, IndexerDefinition _) => new HttpResponse(r, new HttpHeader(), new CookieCollection(), responseJson));
+                .Setup(o => o.ExecuteProxiedAsync(It.Is<HttpRequest>(v => v.Method == HttpMethod.Post), Subject.Definition, It.IsAny<CancellationToken>()))
+                .ReturnsAsync((HttpRequest r, IndexerDefinition _, CancellationToken _) => new HttpResponse(r, new HttpHeader(), new CookieCollection(), responseJson));
 
             var torrents = (await Subject.Fetch(_movieSearchCriteria)).Releases;
 
@@ -76,7 +77,7 @@ namespace NzbDrone.Core.Test.IndexerTests.HDBitsTests
 
             Mocker.GetMock<IIndexerHttpClient>()
                 .Setup(o => o.ExecuteProxiedAsync(It.IsAny<HttpRequest>(), Subject.Definition))
-                .ReturnsAsync((HttpRequest r, IndexerDefinition _) => new HttpResponse(r, new HttpHeader(), new CookieCollection(), Encoding.UTF8.GetBytes(responseJson)));
+                .ReturnsAsync((HttpRequest r, IndexerDefinition _, CancellationToken _) => new HttpResponse(r, new HttpHeader(), new CookieCollection(), Encoding.UTF8.GetBytes(responseJson)));
 
             var torrents = (await Subject.Fetch(_movieSearchCriteria)).Releases;
 

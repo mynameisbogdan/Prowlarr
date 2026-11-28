@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentValidation.Results;
 using NLog;
@@ -46,11 +47,11 @@ namespace NzbDrone.Core.Indexers.Definitions.TorrentRss
             }
         }
 
-        protected override Task<ValidationFailure> TestConnection()
+        protected override Task<ValidationFailure> TestConnection(CancellationToken cancellationToken = default)
         {
             UpdateCookies(null, null);
 
-            return base.TestConnection();
+            return base.TestConnection(cancellationToken);
         }
 
         private IndexerDefinition GetDefinition(string name, string description, TorrentRssIndexerSettings settings)

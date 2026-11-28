@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentValidation.Results;
 using MonoTorrent;
@@ -91,7 +92,7 @@ namespace NzbDrone.Core.Indexers
             _eventAggregator = eventAggregator;
         }
 
-        public override Task<IndexerPageableQueryResult> Fetch(MovieSearchCriteria searchCriteria)
+        public override Task<IndexerPageableQueryResult> Fetch(MovieSearchCriteria searchCriteria, CancellationToken cancellationToken = default)
         {
             if (!SupportsSearch && !SupportsRss)
             {
@@ -117,10 +118,10 @@ namespace NzbDrone.Core.Indexers
                 return Task.FromResult(new IndexerPageableQueryResult());
             }
 
-            return FetchReleases(g => SetCookieFunctions(g).GetSearchRequests(searchCriteria), searchCriteria);
+            return FetchReleases(g => SetCookieFunctions(g).GetSearchRequests(searchCriteria), searchCriteria, cancellationToken: cancellationToken);
         }
 
-        public override Task<IndexerPageableQueryResult> Fetch(MusicSearchCriteria searchCriteria)
+        public override Task<IndexerPageableQueryResult> Fetch(MusicSearchCriteria searchCriteria, CancellationToken cancellationToken = default)
         {
             if (!SupportsSearch && !SupportsRss)
             {
@@ -146,10 +147,10 @@ namespace NzbDrone.Core.Indexers
                 return Task.FromResult(new IndexerPageableQueryResult());
             }
 
-            return FetchReleases(g => SetCookieFunctions(g).GetSearchRequests(searchCriteria), searchCriteria);
+            return FetchReleases(g => SetCookieFunctions(g).GetSearchRequests(searchCriteria), searchCriteria, cancellationToken: cancellationToken);
         }
 
-        public override Task<IndexerPageableQueryResult> Fetch(TvSearchCriteria searchCriteria)
+        public override Task<IndexerPageableQueryResult> Fetch(TvSearchCriteria searchCriteria, CancellationToken cancellationToken = default)
         {
             if (!SupportsSearch && !SupportsRss)
             {
@@ -178,10 +179,10 @@ namespace NzbDrone.Core.Indexers
                 return Task.FromResult(new IndexerPageableQueryResult());
             }
 
-            return FetchReleases(g => SetCookieFunctions(g).GetSearchRequests(searchCriteria), searchCriteria);
+            return FetchReleases(g => SetCookieFunctions(g).GetSearchRequests(searchCriteria), searchCriteria, cancellationToken: cancellationToken);
         }
 
-        public override Task<IndexerPageableQueryResult> Fetch(BookSearchCriteria searchCriteria)
+        public override Task<IndexerPageableQueryResult> Fetch(BookSearchCriteria searchCriteria, CancellationToken cancellationToken = default)
         {
             if (!SupportsSearch && !SupportsRss)
             {
@@ -206,10 +207,10 @@ namespace NzbDrone.Core.Indexers
                 return Task.FromResult(new IndexerPageableQueryResult());
             }
 
-            return FetchReleases(g => SetCookieFunctions(g).GetSearchRequests(searchCriteria), searchCriteria);
+            return FetchReleases(g => SetCookieFunctions(g).GetSearchRequests(searchCriteria), searchCriteria, cancellationToken: cancellationToken);
         }
 
-        public override Task<IndexerPageableQueryResult> Fetch(BasicSearchCriteria searchCriteria)
+        public override Task<IndexerPageableQueryResult> Fetch(BasicSearchCriteria searchCriteria, CancellationToken cancellationToken = default)
         {
             if (!SupportsSearch && !SupportsRss)
             {
@@ -221,10 +222,10 @@ namespace NzbDrone.Core.Indexers
                 return Task.FromResult(new IndexerPageableQueryResult());
             }
 
-            return FetchReleases(g => SetCookieFunctions(g).GetSearchRequests(searchCriteria), searchCriteria);
+            return FetchReleases(g => SetCookieFunctions(g).GetSearchRequests(searchCriteria), searchCriteria, cancellationToken: cancellationToken);
         }
 
-        public override async Task<IndexerDownloadResponse> Download(Uri link)
+        public override async Task<IndexerDownloadResponse> Download(Uri link, CancellationToken cancellationToken = default)
         {
             Cookies = GetCookies();
 
@@ -248,7 +249,7 @@ namespace NzbDrone.Core.Indexers
 
             try
             {
-                var response = await _httpClient.ExecuteProxiedAsync(request, Definition);
+                var response = await _httpClient.ExecuteProxiedAsync(request, Definition, cancellationToken);
 
                 if (response.StatusCode is HttpStatusCode.MovedPermanently
                     or HttpStatusCode.Found
@@ -271,7 +272,7 @@ namespace NzbDrone.Core.Indexers
 
                         if (redirectUrl.StartsWith("magnet:"))
                         {
-                            return await Download(new Uri(redirectUrl));
+                            return await Download(new Uri(redirectUrl), cancellationToken);
                         }
 
                         request.Url = new HttpUri(redirectUrl);
@@ -282,7 +283,7 @@ namespace NzbDrone.Core.Indexers
                             throw new WebException($"Too many download redirections were attempted for {autoRedirectChain.Join(" -> ")}", WebExceptionStatus.ProtocolError);
                         }
 
-                        response = await _httpClient.ExecuteProxiedAsync(request, Definition);
+                        response = await _httpClient.ExecuteProxiedAsync(request, Definition, cancellationToken);
                     }
                     while (response.StatusCode is HttpStatusCode.MovedPermanently or HttpStatusCode.Found or HttpStatusCode.SeeOther or HttpStatusCode.TemporaryRedirect or HttpStatusCode.PermanentRedirect);
                 }
@@ -398,7 +399,7 @@ namespace NzbDrone.Core.Indexers
             _indexerStatusService.UpdateCookies(Definition.Id, cookies, expiration);
         }
 
-        protected virtual async Task<IndexerPageableQueryResult> FetchReleases(Func<IIndexerRequestGenerator, IndexerPageableRequestChain> pageableRequestChainSelector, SearchCriteriaBase searchCriteria, bool isRecent = false)
+        protected virtual async Task<IndexerPageableQueryResult> FetchReleases(Func<IIndexerRequestGenerator, IndexerPageableRequestChain> pageableRequestChainSelector, SearchCriteriaBase searchCriteria, bool isRecent = false, CancellationToken cancellationToken = default)
         {
             var releases = new List<ReleaseInfo>();
             var result = new IndexerPageableQueryResult();
@@ -430,7 +431,7 @@ namespace NzbDrone.Core.Indexers
                         {
                             url = request.Url.FullUri;
 
-                            var page = await FetchPage(request, parser);
+                            var page = await FetchPage(request, parser, cancellationToken);
 
                             pageSize = pageSize == 1 ? page.Releases.Count : pageSize;
 
@@ -587,9 +588,9 @@ namespace NzbDrone.Core.Indexers
             return pageSize != 0 && page.Count >= pageSize;
         }
 
-        protected virtual async Task<IndexerQueryResult> FetchPage(IndexerRequest request, IParseIndexerResponse parser)
+        protected virtual async Task<IndexerQueryResult> FetchPage(IndexerRequest request, IParseIndexerResponse parser, CancellationToken cancellationToken = default)
         {
-            var response = await FetchIndexerResponse(request);
+            var response = await FetchIndexerResponse(request, cancellationToken);
 
             try
             {
@@ -637,7 +638,7 @@ namespace NzbDrone.Core.Indexers
             }
         }
 
-        protected virtual async Task<IndexerResponse> FetchIndexerResponse(IndexerRequest request)
+        protected virtual async Task<IndexerResponse> FetchIndexerResponse(IndexerRequest request, CancellationToken cancellationToken = default)
         {
             _logger.Debug("Downloading Feed " + request.HttpRequest.ToString(false));
 
@@ -672,7 +673,7 @@ namespace NzbDrone.Core.Indexers
             }
 
             var response = await RetryStrategy
-                .ExecuteAsync(static async (state, _) => await state._httpClient.ExecuteProxiedAsync(state.HttpRequest, state.Definition), (_httpClient, request.HttpRequest, Definition))
+                .ExecuteAsync(static async (state, token) => await state._httpClient.ExecuteProxiedAsync(state.HttpRequest, state.Definition, token), (_httpClient, request.HttpRequest, Definition), cancellationToken)
                 .ConfigureAwait(false);
 
             // Check response to see if auth is needed, if needed try again
@@ -685,7 +686,7 @@ namespace NzbDrone.Core.Indexers
                 request.HttpRequest.Url = originalUrl;
                 ModifyRequest(request);
 
-                response = await _httpClient.ExecuteProxiedAsync(request.HttpRequest, Definition);
+                response = await _httpClient.ExecuteProxiedAsync(request.HttpRequest, Definition, cancellationToken);
             }
 
             if (CloudFlareDetectionService.IsCloudflareProtected(response))
@@ -717,7 +718,7 @@ namespace NzbDrone.Core.Indexers
             return new IndexerResponse(request, response);
         }
 
-        protected async Task<HttpResponse> ExecuteAuth(HttpRequest request)
+        protected async Task<HttpResponse> ExecuteAuth(HttpRequest request, CancellationToken cancellationToken = default)
         {
             request.Encoding = Encoding;
 
@@ -731,19 +732,19 @@ namespace NzbDrone.Core.Indexers
                 request.RateLimit = RateLimit;
             }
 
-            var response = await _httpClient.ExecuteProxiedAsync(request, Definition);
+            var response = await _httpClient.ExecuteProxiedAsync(request, Definition, cancellationToken);
 
             _eventAggregator.PublishEvent(new IndexerAuthEvent(Definition.Id, !response.HasHttpError, response.ElapsedTime));
 
             return response;
         }
 
-        protected override async Task Test(List<ValidationFailure> failures)
+        protected override async Task Test(List<ValidationFailure> failures, CancellationToken cancellationToken = default)
         {
-            failures.AddIfNotNull(await TestConnection());
+            failures.AddIfNotNull(await TestConnection(cancellationToken));
         }
 
-        protected virtual async Task<ValidationFailure> TestConnection()
+        protected virtual async Task<ValidationFailure> TestConnection(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -771,7 +772,7 @@ namespace NzbDrone.Core.Indexers
                     return new ValidationFailure(string.Empty, "No rss feed query available. This may be an issue with the indexer or your indexer category settings.");
                 }
 
-                var releases = await FetchPage(firstRequest, parser);
+                var releases = await FetchPage(firstRequest, parser, cancellationToken);
 
                 if (releases.Releases.Empty())
                 {

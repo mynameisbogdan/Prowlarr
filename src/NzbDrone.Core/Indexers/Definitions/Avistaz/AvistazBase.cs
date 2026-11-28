@@ -1,5 +1,6 @@
 using System;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentValidation.Results;
 using NLog;
@@ -85,11 +86,11 @@ namespace NzbDrone.Core.Indexers.Definitions.Avistaz
             base.ModifyRequest(request);
         }
 
-        protected override async Task<ValidationFailure> TestConnection()
+        protected override async Task<ValidationFailure> TestConnection(CancellationToken cancellationToken = default)
         {
             try
             {
-                await GetToken().ConfigureAwait(false);
+                await GetToken(cancellationToken).ConfigureAwait(false);
             }
             catch (HttpException ex)
             {
@@ -112,10 +113,10 @@ namespace NzbDrone.Core.Indexers.Definitions.Avistaz
                 return new ValidationFailure(string.Empty, "Unable to connect to indexer, check the log above the ValidationFailure for more details. " + ex.Message);
             }
 
-            return await base.TestConnection().ConfigureAwait(false);
+            return await base.TestConnection(cancellationToken).ConfigureAwait(false);
         }
 
-        private async Task<string> GetToken()
+        private async Task<string> GetToken(CancellationToken cancellationToken = default)
         {
             var requestBuilder = new HttpRequestBuilder(LoginUrl)
             {
@@ -130,7 +131,7 @@ namespace NzbDrone.Core.Indexers.Definitions.Avistaz
                 .Accept(HttpAccept.Json)
                 .Build();
 
-            var response = await ExecuteAuth(authLoginRequest).ConfigureAwait(false);
+            var response = await ExecuteAuth(authLoginRequest, cancellationToken).ConfigureAwait(false);
 
             if (!STJson.TryDeserialize<AvistazAuthResponse>(response.ResponseData, out var authResponse))
             {

@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using NLog;
 using NzbDrone.Common.Http;
@@ -14,8 +15,8 @@ namespace NzbDrone.Core.Download
 {
     public interface IDownloadService
     {
-        Task SendReportToClient(ReleaseInfo release, string source, string host, bool redirect, int? downloadClientId);
-        Task<byte[]> DownloadReport(string link, int indexerId, string source, string host, string title);
+        Task SendReportToClient(ReleaseInfo release, string source, string host, bool redirect, int? downloadClientId, CancellationToken cancellationToken = default);
+        Task<byte[]> DownloadReport(string link, int indexerId, string source, string host, string title, CancellationToken cancellationToken = default);
         void RecordRedirect(string link, int indexerId, string source, string host, string title);
     }
 
@@ -43,16 +44,16 @@ namespace NzbDrone.Core.Download
             _logger = logger;
         }
 
-        public async Task SendReportToClient(ReleaseInfo release, string source, string host, bool redirect, int? downloadClientId)
+        public async Task SendReportToClient(ReleaseInfo release, string source, string host, bool redirect, int? downloadClientId, CancellationToken cancellationToken = default)
         {
             var downloadClient = downloadClientId.HasValue
                 ? _downloadClientProvider.Get(downloadClientId.Value)
                 : _downloadClientProvider.GetDownloadClient(release.DownloadProtocol, release.IndexerId);
 
-            await SendReportToClient(release, source, host, redirect, downloadClient);
+            await SendReportToClient(release, source, host, redirect, downloadClient, cancellationToken);
         }
 
-        private async Task SendReportToClient(ReleaseInfo release, string source, string host, bool redirect, IDownloadClient downloadClient)
+        private async Task SendReportToClient(ReleaseInfo release, string source, string host, bool redirect, IDownloadClient downloadClient, CancellationToken cancellationToken = default)
         {
             var downloadTitle = release.Title;
 
@@ -76,7 +77,7 @@ namespace NzbDrone.Core.Download
             string downloadClientId;
             try
             {
-                downloadClientId = await downloadClient.Download(release, redirect, indexer);
+                downloadClientId = await downloadClient.Download(release, redirect, indexer, cancellationToken);
                 _downloadClientStatusService.RecordSuccess(downloadClient.Definition.Id);
                 _indexerStatusService.RecordSuccess(release.IndexerId);
             }
@@ -122,7 +123,7 @@ namespace NzbDrone.Core.Download
             _eventAggregator.PublishEvent(grabEvent);
         }
 
-        public async Task<byte[]> DownloadReport(string link, int indexerId, string source, string host, string title)
+        public async Task<byte[]> DownloadReport(string link, int indexerId, string source, string host, string title, CancellationToken cancellationToken = default)
         {
             _logger.Trace("Attempting download of {0}", link);
             var url = new Uri(link);
@@ -148,7 +149,7 @@ namespace NzbDrone.Core.Download
 
             try
             {
-                var downloadResponse = await indexer.Download(url);
+                var downloadResponse = await indexer.Download(url, cancellationToken);
                 downloadedBytes = downloadResponse.Data;
                 _indexerStatusService.RecordSuccess(indexerId);
                 grabEvent.Successful = true;

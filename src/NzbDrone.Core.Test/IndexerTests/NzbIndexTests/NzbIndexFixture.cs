@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
@@ -36,8 +37,8 @@ namespace NzbDrone.Core.Test.IndexerTests.NzbIndexTests
             var responseJson = ReadAllText(@"Files/Indexers/NzbIndex/search.json");
 
             Mocker.GetMock<IIndexerHttpClient>()
-                .Setup(o => o.ExecuteProxiedAsync(It.Is<HttpRequest>(v => v.Method == HttpMethod.Get), Subject.Definition))
-                .ReturnsAsync((HttpRequest r, IndexerDefinition _) => new HttpResponse(r, new HttpHeader { { "Content-Type", "application/json" } }, new CookieCollection(), responseJson));
+                .Setup(o => o.ExecuteProxiedAsync(It.Is<HttpRequest>(v => v.Method == HttpMethod.Get), Subject.Definition, It.IsAny<CancellationToken>()))
+                .ReturnsAsync((HttpRequest r, IndexerDefinition _, CancellationToken _) => new HttpResponse(r, new HttpHeader { { "Content-Type", "application/json" } }, new CookieCollection(), responseJson));
 
             var releases = (await Subject.Fetch(new BasicSearchCriteria { SearchTerm = "test" })).Releases;
 

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentValidation;
 using FluentValidation.Results;
@@ -200,14 +201,14 @@ namespace NzbDrone.Core.Indexers.Definitions
             return caps;
         }
 
-        protected override async Task Test(List<ValidationFailure> failures)
+        protected override async Task Test(List<ValidationFailure> failures, CancellationToken cancellationToken = default)
         {
-            await FetchPasskey().ConfigureAwait(false);
+            await FetchPasskey(cancellationToken).ConfigureAwait(false);
 
-            await base.Test(failures).ConfigureAwait(false);
+            await base.Test(failures, cancellationToken).ConfigureAwait(false);
         }
 
-        private async Task FetchPasskey()
+        private async Task FetchPasskey(CancellationToken cancellationToken = default)
         {
             var request = new HttpRequestBuilder($"{Settings.BaseUrl.Trim().TrimEnd('/')}/api.php")
                 .Accept(HttpAccept.Json)
@@ -215,7 +216,7 @@ namespace NzbDrone.Core.Indexers.Definitions
                 .AddQueryParam("request", "quick_user")
                 .Build();
 
-            var indexResponse = await _httpClient.ExecuteProxiedAsync(request, Definition).ConfigureAwait(false);
+            var indexResponse = await _httpClient.ExecuteProxiedAsync(request, Definition, cancellationToken).ConfigureAwait(false);
 
             var index = Json.Deserialize<GazelleGamesUserResponse>(indexResponse.Content);
 

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentValidation.Results;
 using NLog;
@@ -29,7 +30,7 @@ namespace NzbDrone.Core.Download.Clients.Pneumatic
 
         public override DownloadProtocol Protocol => DownloadProtocol.Usenet;
 
-        public override async Task<string> Download(ReleaseInfo release, bool redirect, IIndexer indexer)
+        public override async Task<string> Download(ReleaseInfo release, bool redirect, IIndexer indexer, CancellationToken cancellationToken = default)
         {
             var url = new Uri(release.DownloadUrl);
             var title = release.Title;
@@ -41,9 +42,9 @@ namespace NzbDrone.Core.Download.Clients.Pneumatic
 
             _logger.Debug("Downloading NZB from: {0} to: {1}", url, nzbFile);
 
-            var downloadResponse = await indexer.Download(url);
+            var downloadResponse = await indexer.Download(url, cancellationToken);
 
-            await File.WriteAllBytesAsync(nzbFile, downloadResponse.Data);
+            await File.WriteAllBytesAsync(nzbFile, downloadResponse.Data, cancellationToken);
 
             _logger.Debug("NZB Download succeeded, saved to: {0}", nzbFile);
 

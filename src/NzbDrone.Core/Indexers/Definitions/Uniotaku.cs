@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using AngleSharp.Html.Parser;
 using Newtonsoft.Json.Linq;
@@ -82,17 +83,17 @@ public class Uniotaku : TorrentIndexerBase<UniotakuSettings>
         return !httpResponse.GetCookies().ContainsKey("uid") || !httpResponse.GetCookies().ContainsKey("pass");
     }
 
-    public override async Task<IndexerDownloadResponse> Download(Uri link)
+    public override async Task<IndexerDownloadResponse> Download(Uri link, CancellationToken cancellationToken = default)
     {
         var request = new HttpRequestBuilder(link.ToString())
             .SetCookies(GetCookies() ?? new Dictionary<string, string>())
             .Accept(HttpAccept.Html)
             .Build();
 
-        var response = await _httpClient.ExecuteProxiedAsync(request, Definition);
+        var response = await _httpClient.ExecuteProxiedAsync(request, Definition, cancellationToken);
 
         var parser = new HtmlParser();
-        using var dom = parser.ParseDocument(response.Content);
+        using var dom = await parser.ParseDocumentAsync(response.Content, cancellationToken);
         var downloadLink = dom.QuerySelector("a[href^=\"download.php?id=\"]")?.GetAttribute("href")?.Trim();
 
         if (downloadLink == null)
@@ -100,7 +101,7 @@ public class Uniotaku : TorrentIndexerBase<UniotakuSettings>
             throw new Exception($"Failed to fetch download link from {link}");
         }
 
-        return await base.Download(new Uri(Settings.BaseUrl + downloadLink));
+        return await base.Download(new Uri(Settings.BaseUrl + downloadLink), cancellationToken);
     }
 
     private IndexerCapabilities SetCapabilities()

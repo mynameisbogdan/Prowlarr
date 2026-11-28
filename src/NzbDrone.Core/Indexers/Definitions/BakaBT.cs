@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using AngleSharp.Dom;
 using AngleSharp.Html.Parser;
@@ -46,16 +47,16 @@ namespace NzbDrone.Core.Indexers.Definitions
             return new BakaBTParser(Settings, Capabilities.Categories);
         }
 
-        public override async Task<IndexerDownloadResponse> Download(Uri link)
+        public override async Task<IndexerDownloadResponse> Download(Uri link, CancellationToken cancellationToken = default)
         {
             var request = new HttpRequestBuilder(link.ToString())
                 .SetCookies(GetCookies() ?? new Dictionary<string, string>())
                 .Build();
 
-            var response = await _httpClient.ExecuteProxiedAsync(request, Definition);
+            var response = await _httpClient.ExecuteProxiedAsync(request, Definition, cancellationToken);
 
             var parser = new HtmlParser();
-            using var dom = parser.ParseDocument(response.Content);
+            using var dom = await parser.ParseDocumentAsync(response.Content, cancellationToken);
             var downloadLink = dom.QuerySelector(".download_link")?.GetAttribute("href");
 
             if (downloadLink.IsNullOrWhiteSpace())
@@ -63,7 +64,7 @@ namespace NzbDrone.Core.Indexers.Definitions
                 throw new Exception("Unable to find download link.");
             }
 
-            return await base.Download(new Uri(Settings.BaseUrl + downloadLink));
+            return await base.Download(new Uri(Settings.BaseUrl + downloadLink), cancellationToken);
         }
 
         protected override async Task DoLogin()

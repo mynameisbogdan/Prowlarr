@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using NLog;
 using NzbDrone.Common.Extensions;
@@ -48,11 +49,11 @@ public class AnimeZ : AvistazBase
         return new AnimeZParser(Capabilities.Categories);
     }
 
-    public override async Task<IndexerDownloadResponse> Download(Uri link)
+    public override async Task<IndexerDownloadResponse> Download(Uri link, CancellationToken cancellationToken = default)
     {
         try
         {
-            return await base.Download(link).ConfigureAwait(false);
+            return await base.Download(link, cancellationToken).ConfigureAwait(false);
         }
         catch (ReleaseDownloadException ex) when (ex.InnerException is HttpException httpException &&
                                                   httpException.Response.StatusCode is HttpStatusCode.Unauthorized)
@@ -60,7 +61,7 @@ public class AnimeZ : AvistazBase
             await DoLogin().ConfigureAwait(false);
         }
 
-        return await base.Download(link).ConfigureAwait(false);
+        return await base.Download(link, cancellationToken).ConfigureAwait(false);
     }
 
     protected override Task<HttpRequest> GetDownloadRequest(Uri link)

@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using MonoTorrent;
 using NLog;
@@ -41,7 +42,7 @@ namespace NzbDrone.Core.Download
         protected abstract string AddFromTorrentFile(TorrentInfo release, string hash, string filename, byte[] fileContent);
         protected abstract string AddFromTorrentLink(TorrentInfo release, string hash, string torrentLink);
 
-        public override async Task<string> Download(ReleaseInfo release, bool redirect, IIndexer indexer)
+        public override async Task<string> Download(ReleaseInfo release, bool redirect, IIndexer indexer, CancellationToken cancellationToken = default)
         {
             var torrentInfo = release as TorrentInfo;
 
@@ -74,7 +75,7 @@ namespace NzbDrone.Core.Download
                 {
                     try
                     {
-                        return await DownloadFromWebUrl(torrentInfo, indexer, torrentUrl);
+                        return await DownloadFromWebUrl(torrentInfo, indexer, torrentUrl, cancellationToken);
                     }
                     catch (Exception ex)
                     {
@@ -120,16 +121,16 @@ namespace NzbDrone.Core.Download
 
                 if (torrentUrl.IsNotNullOrWhiteSpace())
                 {
-                    return await DownloadFromWebUrl(torrentInfo, indexer, torrentUrl);
+                    return await DownloadFromWebUrl(torrentInfo, indexer, torrentUrl, cancellationToken);
                 }
             }
 
             return null;
         }
 
-        private async Task<string> DownloadFromWebUrl(TorrentInfo release, IIndexer indexer, string torrentUrl)
+        private async Task<string> DownloadFromWebUrl(TorrentInfo release, IIndexer indexer, string torrentUrl, CancellationToken cancellationToken = default)
         {
-            var downloadResponse = await indexer.Download(new Uri(torrentUrl));
+            var downloadResponse = await indexer.Download(new Uri(torrentUrl), cancellationToken);
             var torrentFile = downloadResponse.Data;
 
             // handle magnet URLs

@@ -9,6 +9,7 @@ using System.Net;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentValidation;
 using NLog;
@@ -68,7 +69,7 @@ namespace NzbDrone.Core.Indexers.Definitions
             return $"{request.HttpRequest.Url.FullUri}.{HashUtil.ComputeSha256Hash(Settings.ToJson())}";
         }
 
-        protected override async Task<IndexerQueryResult> FetchPage(IndexerRequest request, IParseIndexerResponse parser)
+        protected override async Task<IndexerQueryResult> FetchPage(IndexerRequest request, IParseIndexerResponse parser, CancellationToken cancellationToken = default)
         {
             var cacheKey = BuildQueryResultCacheKey(request);
             var queryResult = _queryResultCache.Find(cacheKey);
@@ -82,7 +83,7 @@ namespace NzbDrone.Core.Indexers.Definitions
 
             _queryResultCache.ClearExpired();
 
-            queryResult = await base.FetchPage(request, parser);
+            queryResult = await base.FetchPage(request, parser, cancellationToken);
             _queryResultCache.Set(cacheKey, queryResult, TimeSpan.FromMinutes(3));
 
             return queryResult;

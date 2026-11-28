@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using NLog;
 using NzbDrone.Common.Cache;
@@ -27,14 +28,14 @@ namespace NzbDrone.Common.Http
         HttpResponse<T> Post<T>(HttpRequest request)
             where T : new();
 
-        Task<HttpResponse> ExecuteAsync(HttpRequest request);
-        Task DownloadFileAsync(string url, string fileName);
-        Task<HttpResponse> GetAsync(HttpRequest request);
-        Task<HttpResponse<T>> GetAsync<T>(HttpRequest request)
+        Task<HttpResponse> ExecuteAsync(HttpRequest request, CancellationToken cancellationToken = default);
+        Task DownloadFileAsync(string url, string fileName, CancellationToken cancellationToken = default);
+        Task<HttpResponse> GetAsync(HttpRequest request, CancellationToken cancellationToken = default);
+        Task<HttpResponse<T>> GetAsync<T>(HttpRequest request, CancellationToken cancellationToken = default)
             where T : new();
-        Task<HttpResponse> HeadAsync(HttpRequest request);
-        Task<HttpResponse> PostAsync(HttpRequest request);
-        Task<HttpResponse<T>> PostAsync<T>(HttpRequest request)
+        Task<HttpResponse> HeadAsync(HttpRequest request, CancellationToken cancellationToken = default);
+        Task<HttpResponse> PostAsync(HttpRequest request, CancellationToken cancellationToken = default);
+        Task<HttpResponse<T>> PostAsync<T>(HttpRequest request, CancellationToken cancellationToken = default)
             where T : new();
     }
 
@@ -62,7 +63,7 @@ namespace NzbDrone.Common.Http
             _cookieContainerCache = cacheManager.GetCache<CookieContainer>(typeof(HttpClient));
         }
 
-        public virtual async Task<HttpResponse> ExecuteAsync(HttpRequest request)
+        public virtual async Task<HttpResponse> ExecuteAsync(HttpRequest request, CancellationToken cancellationToken = default)
         {
             var cookieContainer = InitializeRequestCookies(request);
 
@@ -321,7 +322,7 @@ namespace NzbDrone.Common.Http
             }
         }
 
-        public async Task DownloadFileAsync(string url, string fileName)
+        public async Task DownloadFileAsync(string url, string fileName, CancellationToken cancellationToken = default)
         {
             var fileNamePart = fileName + ".part";
 
@@ -342,7 +343,7 @@ namespace NzbDrone.Common.Http
                     request.AllowAutoRedirect = true;
                     request.ResponseStream = fileStream;
                     request.RequestTimeout = TimeSpan.FromSeconds(300);
-                    var response = await GetAsync(request);
+                    var response = await GetAsync(request, cancellationToken);
 
                     if (response.Headers.ContentType != null && response.Headers.ContentType.Contains("text/html"))
                     {
@@ -375,10 +376,10 @@ namespace NzbDrone.Common.Http
             Task.Run(() => DownloadFileAsync(url, fileName)).GetAwaiter().GetResult();
         }
 
-        public Task<HttpResponse> GetAsync(HttpRequest request)
+        public Task<HttpResponse> GetAsync(HttpRequest request, CancellationToken cancellationToken = default)
         {
             request.Method = HttpMethod.Get;
-            return ExecuteAsync(request);
+            return ExecuteAsync(request, cancellationToken);
         }
 
         public HttpResponse Get(HttpRequest request)
@@ -386,10 +387,10 @@ namespace NzbDrone.Common.Http
             return Task.Run(() => GetAsync(request)).GetAwaiter().GetResult();
         }
 
-        public async Task<HttpResponse<T>> GetAsync<T>(HttpRequest request)
+        public async Task<HttpResponse<T>> GetAsync<T>(HttpRequest request, CancellationToken cancellationToken = default)
             where T : new()
         {
-            var response = await GetAsync(request);
+            var response = await GetAsync(request, cancellationToken);
             CheckResponseContentType(response);
             return new HttpResponse<T>(response);
         }
@@ -400,10 +401,10 @@ namespace NzbDrone.Common.Http
             return Task.Run(() => GetAsync<T>(request)).GetAwaiter().GetResult();
         }
 
-        public Task<HttpResponse> HeadAsync(HttpRequest request)
+        public Task<HttpResponse> HeadAsync(HttpRequest request, CancellationToken cancellationToken = default)
         {
             request.Method = HttpMethod.Head;
-            return ExecuteAsync(request);
+            return ExecuteAsync(request, cancellationToken);
         }
 
         public HttpResponse Head(HttpRequest request)
@@ -411,10 +412,10 @@ namespace NzbDrone.Common.Http
             return Task.Run(() => HeadAsync(request)).GetAwaiter().GetResult();
         }
 
-        public Task<HttpResponse> PostAsync(HttpRequest request)
+        public Task<HttpResponse> PostAsync(HttpRequest request, CancellationToken cancellationToken = default)
         {
             request.Method = HttpMethod.Post;
-            return ExecuteAsync(request);
+            return ExecuteAsync(request, cancellationToken);
         }
 
         public HttpResponse Post(HttpRequest request)
@@ -422,10 +423,10 @@ namespace NzbDrone.Common.Http
             return Task.Run(() => PostAsync(request)).GetAwaiter().GetResult();
         }
 
-        public async Task<HttpResponse<T>> PostAsync<T>(HttpRequest request)
+        public async Task<HttpResponse<T>> PostAsync<T>(HttpRequest request, CancellationToken cancellationToken = default)
             where T : new()
         {
-            var response = await PostAsync(request);
+            var response = await PostAsync(request, cancellationToken);
             CheckResponseContentType(response);
             return new HttpResponse<T>(response);
         }

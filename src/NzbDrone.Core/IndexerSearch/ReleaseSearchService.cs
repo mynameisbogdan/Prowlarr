@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using NLog;
 using NzbDrone.Common.Instrumentation.Extensions;
@@ -16,7 +17,7 @@ namespace NzbDrone.Core.IndexerSearch
 {
     public interface IReleaseSearchService
     {
-        Task<NewznabResults> Search(NewznabRequest request, List<int> indexerIds, bool interactiveSearch);
+        Task<NewznabResults> Search(NewznabRequest request, List<int> indexerIds, bool interactiveSearch, CancellationToken cancellationToken = default);
     }
 
     public class ReleaseSearchService : IReleaseSearchService
@@ -37,19 +38,19 @@ namespace NzbDrone.Core.IndexerSearch
             _logger = logger;
         }
 
-        public Task<NewznabResults> Search(NewznabRequest request, List<int> indexerIds, bool interactiveSearch)
+        public Task<NewznabResults> Search(NewznabRequest request, List<int> indexerIds, bool interactiveSearch, CancellationToken cancellationToken = default)
         {
             return request.t switch
             {
-                "movie" => MovieSearch(request, indexerIds, interactiveSearch),
-                "music" => MusicSearch(request, indexerIds, interactiveSearch),
-                "tvsearch" => TvSearch(request, indexerIds, interactiveSearch),
-                "book" => BookSearch(request, indexerIds, interactiveSearch),
-                _ => BasicSearch(request, indexerIds, interactiveSearch)
+                "movie" => MovieSearch(request, indexerIds, interactiveSearch, cancellationToken),
+                "music" => MusicSearch(request, indexerIds, interactiveSearch, cancellationToken),
+                "tvsearch" => TvSearch(request, indexerIds, interactiveSearch, cancellationToken),
+                "book" => BookSearch(request, indexerIds, interactiveSearch, cancellationToken),
+                _ => BasicSearch(request, indexerIds, interactiveSearch, cancellationToken)
             };
         }
 
-        private async Task<NewznabResults> MovieSearch(NewznabRequest request, List<int> indexerIds, bool interactiveSearch)
+        private async Task<NewznabResults> MovieSearch(NewznabRequest request, List<int> indexerIds, bool interactiveSearch, CancellationToken cancellationToken = default)
         {
             var searchSpec = Get<MovieSearchCriteria>(request, indexerIds, interactiveSearch);
 
@@ -62,12 +63,12 @@ namespace NzbDrone.Core.IndexerSearch
             searchSpec.Year = request.year;
             searchSpec.Genre = request.genre;
 
-            var releases = await Dispatch(indexer => indexer.Fetch(searchSpec), searchSpec);
+            var releases = await Dispatch(indexer => indexer.Fetch(searchSpec, cancellationToken), searchSpec);
 
             return new NewznabResults { Releases = DeDupeReleases(releases) };
         }
 
-        private async Task<NewznabResults> MusicSearch(NewznabRequest request, List<int> indexerIds, bool interactiveSearch)
+        private async Task<NewznabResults> MusicSearch(NewznabRequest request, List<int> indexerIds, bool interactiveSearch, CancellationToken cancellationToken = default)
         {
             var searchSpec = Get<MusicSearchCriteria>(request, indexerIds, interactiveSearch);
 
@@ -78,12 +79,12 @@ namespace NzbDrone.Core.IndexerSearch
             searchSpec.Track = request.track;
             searchSpec.Year = request.year;
 
-            var releases = await Dispatch(indexer => indexer.Fetch(searchSpec), searchSpec);
+            var releases = await Dispatch(indexer => indexer.Fetch(searchSpec, cancellationToken), searchSpec);
 
             return new NewznabResults { Releases = DeDupeReleases(releases) };
         }
 
-        private async Task<NewznabResults> TvSearch(NewznabRequest request, List<int> indexerIds, bool interactiveSearch)
+        private async Task<NewznabResults> TvSearch(NewznabRequest request, List<int> indexerIds, bool interactiveSearch, CancellationToken cancellationToken = default)
         {
             var searchSpec = Get<TvSearchCriteria>(request, indexerIds, interactiveSearch);
 
@@ -101,12 +102,12 @@ namespace NzbDrone.Core.IndexerSearch
             searchSpec.Year = request.year;
             searchSpec.Genre = request.genre;
 
-            var releases = await Dispatch(indexer => indexer.Fetch(searchSpec), searchSpec);
+            var releases = await Dispatch(indexer => indexer.Fetch(searchSpec, cancellationToken), searchSpec);
 
             return new NewznabResults { Releases = DeDupeReleases(releases) };
         }
 
-        private async Task<NewznabResults> BookSearch(NewznabRequest request, List<int> indexerIds, bool interactiveSearch)
+        private async Task<NewznabResults> BookSearch(NewznabRequest request, List<int> indexerIds, bool interactiveSearch, CancellationToken cancellationToken = default)
         {
             var searchSpec = Get<BookSearchCriteria>(request, indexerIds, interactiveSearch);
 
@@ -116,16 +117,16 @@ namespace NzbDrone.Core.IndexerSearch
             searchSpec.Year = request.year;
             searchSpec.Genre = request.genre;
 
-            var releases = await Dispatch(indexer => indexer.Fetch(searchSpec), searchSpec);
+            var releases = await Dispatch(indexer => indexer.Fetch(searchSpec, cancellationToken), searchSpec);
 
             return new NewznabResults { Releases = DeDupeReleases(releases) };
         }
 
-        private async Task<NewznabResults> BasicSearch(NewznabRequest request, List<int> indexerIds, bool interactiveSearch)
+        private async Task<NewznabResults> BasicSearch(NewznabRequest request, List<int> indexerIds, bool interactiveSearch, CancellationToken cancellationToken = default)
         {
             var searchSpec = Get<BasicSearchCriteria>(request, indexerIds, interactiveSearch);
 
-            var releases = await Dispatch(indexer => indexer.Fetch(searchSpec), searchSpec);
+            var releases = await Dispatch(indexer => indexer.Fetch(searchSpec, cancellationToken), searchSpec);
 
             return new NewznabResults { Releases = DeDupeReleases(releases) };
         }
